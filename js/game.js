@@ -77,10 +77,10 @@ let tutorialFeedbackTimer = 0;
 let tutorialDummy = null;
 let tutorialCompleted = false;
 const TUTORIAL_STEPS = [
-  { instruction: 'Press Z or X to PUNCH', detail: 'Hit the dummy!', goal: 3 },
-  { instruction: 'Press \u2190 or \u2192 to DODGE', detail: 'Dodge the attack!', goal: 2 },
-  { instruction: 'Press \u2193 to BLOCK', detail: 'Block the attack!', goal: 2 },
-  { instruction: 'Dodge, then COUNTER-PUNCH!', detail: 'Watch the tell, dodge, then punch!', goal: 3 },
+  { instruction: 'Press Z or X to PUNCH', detail: 'Hit the dummy!', goal: 1 },
+  { instruction: 'Press \u2190 or \u2192 to DODGE', detail: 'Dodge the attack!', goal: 1 },
+  { instruction: 'Press \u2193 to BLOCK', detail: 'Block the attack!', goal: 1 },
+  { instruction: 'Dodge, then COUNTER-PUNCH!', detail: 'Watch the tell, dodge, then punch!', goal: 1 },
   { instruction: "You're ready!", detail: 'Press ENTER to fight!', goal: 0 },
 ];
 const TUTORIAL_FEEDBACK = ['NICE!', 'GREAT!', 'PERFECT!', 'AWESOME!'];
