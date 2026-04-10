@@ -337,15 +337,12 @@ function drawPostAnime(ctx, x, y, capColor) {
 function drawRingClassic(ctx) {
   const W = 800, H = 600;
 
-  // Crowd background
-  const crowdGrad = ctx.createLinearGradient(0, 0, 0, 280);
-  crowdGrad.addColorStop(0, '#0a0a12');
-  crowdGrad.addColorStop(1, '#1a1a2a');
-  ctx.fillStyle = crowdGrad;
+  // Bright dark-blue background
+  ctx.fillStyle = '#1a1a3a';
   ctx.fillRect(0, 0, W, 280);
 
-  // Crowd silhouettes
-  ctx.fillStyle = '#12121f';
+  // Crowd silhouettes — slightly lighter so they read as a crowd
+  ctx.fillStyle = '#282848';
   for (let i = 0; i < 40; i++) {
     const cx = i * 22 + 5 + Math.sin(i * 3.7) * 4;
     const cy = 230 + Math.sin(i * 2.1) * 12 + Math.sin(gameTime * 1.5 + i) * 2;
@@ -355,8 +352,7 @@ function drawRingClassic(ctx) {
     ctx.fill();
     ctx.fillRect(cx - r * 0.6, cy - r, r * 1.2, r * 1.8);
   }
-  // Second row
-  ctx.fillStyle = '#0e0e1a';
+  ctx.fillStyle = '#222240';
   for (let i = 0; i < 35; i++) {
     const cx = i * 25 + 12 + Math.sin(i * 2.9) * 6;
     const cy = 210 + Math.sin(i * 1.8) * 8 + Math.sin(gameTime * 1.2 + i * 0.7) * 1.5;
@@ -367,12 +363,8 @@ function drawRingClassic(ctx) {
     ctx.fillRect(cx - r * 0.5, cy - r, r * 1.0, r * 1.5);
   }
 
-  // Ring floor (perspective trapezoid)
-  const floorGrad = ctx.createLinearGradient(0, 250, 0, H);
-  floorGrad.addColorStop(0, '#3a3a4a');
-  floorGrad.addColorStop(0.3, '#2a2a38');
-  floorGrad.addColorStop(1, '#1e1e2a');
-  ctx.fillStyle = floorGrad;
+  // Ring floor — solid bright canvas tan
+  ctx.fillStyle = '#d4b896';
   ctx.beginPath();
   ctx.moveTo(80, 250);
   ctx.lineTo(720, 250);
@@ -381,9 +373,20 @@ function drawRingClassic(ctx) {
   ctx.closePath();
   ctx.fill();
 
-  // Floor lines for depth
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
+  // Thick black outline around ring floor edges
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(80, 250);
+  ctx.lineTo(720, 250);
+  ctx.lineTo(800, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.stroke();
+
+  // White ring markings
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
   for (let i = 0; i < 8; i++) {
     const y = 280 + i * 40;
     const spread = (y - 250) / (H - 250);
@@ -395,44 +398,54 @@ function drawRingClassic(ctx) {
     ctx.stroke();
   }
 
-  // Corner posts
-  drawPost(ctx, 95, 250, '#cc3333');
-  drawPost(ctx, 705, 250, '#cc3333');
+  // Corner posts — simple gray rectangles with solid red caps
+  drawPostClassic(ctx, 95, 250, '#cc3333');
+  drawPostClassic(ctx, 705, 250, '#cc3333');
 
-  // Ropes
+  // Ropes — thick, solid white, straight horizontal lines
   for (let r = 0; r < 3; r++) {
     const ropeY = 255 + r * 22;
-    const sag = 4 + r * 2;
-    const alpha = 0.7 - r * 0.15;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 4;
 
     // Left rope
-    ctx.strokeStyle = `rgba(200,180,160,${alpha})`;
-    ctx.lineWidth = 3 - r * 0.5;
     ctx.beginPath();
     ctx.moveTo(95, ropeY);
-    ctx.quadraticCurveTo(30, ropeY + sag + 20, 0, ropeY + sag * 3);
+    ctx.lineTo(0, ropeY + r * 8);
     ctx.stroke();
 
     // Right rope
     ctx.beginPath();
     ctx.moveTo(705, ropeY);
-    ctx.quadraticCurveTo(770, ropeY + sag + 20, 800, ropeY + sag * 3);
+    ctx.lineTo(800, ropeY + r * 8);
     ctx.stroke();
 
-    // Top rope across
+    // Top rope across — straight
     ctx.beginPath();
     ctx.moveTo(95, ropeY);
-    ctx.quadraticCurveTo(400, ropeY + sag, 705, ropeY);
+    ctx.lineTo(705, ropeY);
     ctx.stroke();
   }
+}
 
-  // Overhead light
-  const lightGrad = ctx.createRadialGradient(400, 0, 50, 400, 0, 400);
-  lightGrad.addColorStop(0, 'rgba(255,250,230,0.12)');
-  lightGrad.addColorStop(0.5, 'rgba(255,250,230,0.03)');
-  lightGrad.addColorStop(1, 'rgba(255,250,230,0)');
-  ctx.fillStyle = lightGrad;
-  ctx.fillRect(0, 0, W, H);
+function drawPostClassic(ctx, x, y, capColor) {
+  // Simple gray rectangle
+  ctx.fillStyle = '#999';
+  ctx.fillRect(x - 5, y - 70, 10, 70);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x - 5, y - 70, 10, 70);
+
+  // Solid red cap
+  ctx.fillStyle = capColor;
+  ctx.beginPath();
+  ctx.arc(x, y - 70, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y - 70, 8, 0, Math.PI * 2);
+  ctx.stroke();
 }
 
 function drawPost(ctx, x, y, color) {
@@ -1648,19 +1661,18 @@ function drawAnimeSweatDrops(ctx, x, y) {
 function drawOpponentClassic(ctx, pose, opp) {
   ctx.save();
   const baseX = 400, baseY = 300;
+  const OL = 2.5; // outline width
 
   const { offsetX, offsetY, rotate, scaleX, scaleY, charScale,
           leftArmAngle, rightArmAngle, leftGloveExtend, rightGloveExtend,
           eyeState, mouthState, sway, unblockableGlow } = pose;
 
-  // Unblockable glow effect during telegraph
+  // Unblockable glow — keep simple thick ring
   if (unblockableGlow !== null) {
     ctx.save();
     ctx.translate(baseX + offsetX, baseY + offsetY);
-    ctx.shadowColor = `rgba(255,100,0,${unblockableGlow})`;
-    ctx.shadowBlur = 18;
-    ctx.strokeStyle = `rgba(255,120,30,${unblockableGlow * 0.6})`;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = `rgba(255,120,30,${unblockableGlow * 0.7})`;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.ellipse(0, 0, 55, 100, 0, 0, Math.PI * 2);
     ctx.stroke();
@@ -1669,21 +1681,18 @@ function drawOpponentClassic(ctx, pose, opp) {
 
   ctx.translate(baseX + offsetX, baseY + offsetY);
   ctx.rotate(rotate);
+  // Bigger head: scale char slightly then draw head bigger
   ctx.scale(scaleX * charScale, scaleY * charScale);
 
-  // Shadow on floor
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  // Shadow on floor — flat ellipse
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.beginPath();
   ctx.ellipse(0, 100, 60, 15, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Body / torso (suit jacket)
+  // --- BODY / TORSO (flat fill + outline) ---
   const suitColor = opp.color || '#555';
-  const suitGrad = ctx.createLinearGradient(-45, -40, 45, 80);
-  suitGrad.addColorStop(0, lightenColor(suitColor, 30));
-  suitGrad.addColorStop(0.5, suitColor);
-  suitGrad.addColorStop(1, darkenColor(suitColor, 30));
-  ctx.fillStyle = suitGrad;
+  ctx.fillStyle = suitColor;
   ctx.beginPath();
   ctx.moveTo(-45, -20);
   ctx.quadraticCurveTo(-50, 40, -40, 90);
@@ -1691,9 +1700,12 @@ function drawOpponentClassic(ctx, pose, opp) {
   ctx.quadraticCurveTo(50, 40, 45, -20);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
 
   // Suit lapels
-  ctx.strokeStyle = darkenColor(suitColor, 50);
+  ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(-10, -20);
@@ -1702,8 +1714,8 @@ function drawOpponentClassic(ctx, pose, opp) {
   ctx.lineTo(20, 40);
   ctx.stroke();
 
-  // Shirt
-  ctx.fillStyle = '#e8e0d8';
+  // Shirt — flat white
+  ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.moveTo(-12, -18);
   ctx.lineTo(-8, 50);
@@ -1711,8 +1723,11 @@ function drawOpponentClassic(ctx, pose, opp) {
   ctx.lineTo(12, -18);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-  // Tie
+  // Tie — solid red, no stripes
   ctx.fillStyle = '#cc2222';
   ctx.beginPath();
   ctx.moveTo(-3, -15);
@@ -1722,7 +1737,11 @@ function drawOpponentClassic(ctx, pose, opp) {
   ctx.lineTo(-5, 45);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
   // Tie knot
+  ctx.fillStyle = '#cc2222';
   ctx.beginPath();
   ctx.moveTo(-5, -15);
   ctx.lineTo(5, -15);
@@ -1730,51 +1749,323 @@ function drawOpponentClassic(ctx, pose, opp) {
   ctx.lineTo(-3, -8);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-  // Pocket square for CEO
+  // Pocket square for CEO — simple white rectangle
   if (opp.name === 'The CEO') {
-    ctx.fillStyle = '#e8e0d0';
-    ctx.beginPath();
-    ctx.moveTo(22, 15);
-    ctx.lineTo(30, 10);
-    ctx.lineTo(35, 18);
-    ctx.lineTo(28, 22);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(22, 12, 10, 8);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(22, 12, 10, 8);
   }
 
-  // Collar
-  ctx.fillStyle = '#f0e8e0';
+  // Collar — flat white
+  ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.moveTo(-18, -22);
   ctx.lineTo(-5, -15);
   ctx.lineTo(-12, -30);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.moveTo(18, -22);
   ctx.lineTo(5, -15);
   ctx.lineTo(12, -30);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
 
-  // Arms + Gloves
-  drawArm(ctx, -50, 0, leftArmAngle, leftGloveExtend, suitColor, true);
-  drawArm(ctx, 50, 0, rightArmAngle, rightGloveExtend, suitColor, false);
+  // Arms + Gloves (classic-specific inline drawing)
+  drawArmClassic(ctx, -50, 0, leftArmAngle, leftGloveExtend, suitColor, true);
+  drawArmClassic(ctx, 50, 0, rightArmAngle, rightGloveExtend, suitColor, false);
 
-  // Neck
-  ctx.fillStyle = '#f0d0b0';
+  // Neck — flat skin
+  ctx.fillStyle = '#fdd9b5';
   ctx.fillRect(-10, -38, 20, 20);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.strokeRect(-10, -38, 20, 20);
 
-  // Head
-  drawHead(ctx, 0, -65, opp.color, eyeState, mouthState, opp.name);
+  // Head (bigger — translate up a bit more and scale up 15%)
+  drawHeadClassic(ctx, 0, -70, opp.color, eyeState, mouthState, opp.name);
 
   // Stars over head when stunned or recovery
   if (opp.state === 'stunned' || opp.state === 'recovery') {
-    drawStarsOverHead(ctx, 0, -110);
+    drawStarsOverHead(ctx, 0, -115);
   }
 
   ctx.restore();
+}
+
+// --- CLASSIC-SPECIFIC HELPERS ---
+
+function drawArmClassic(ctx, startX, startY, angle, gloveExtend, suitColor, isLeft) {
+  ctx.save();
+  ctx.translate(startX, startY);
+  ctx.rotate(angle);
+  const OL = 2.5;
+  const dir = isLeft ? 1 : -1;
+
+  // Sleeve — flat fill
+  ctx.fillStyle = suitColor;
+  ctx.beginPath();
+  ctx.moveTo(-8 * dir, -5);
+  ctx.quadraticCurveTo(-15 * dir, 25, -10 * dir + gloveExtend * 0.3, 50 + gloveExtend * 0.6);
+  ctx.lineTo(8 * dir + gloveExtend * 0.3, 50 + gloveExtend * 0.6);
+  ctx.quadraticCurveTo(12 * dir, 25, 8 * dir, -5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
+
+  // Boxing glove — flat red with black outline
+  const gx = gloveExtend * 0.3;
+  const gy = 55 + gloveExtend * 0.7;
+  ctx.fillStyle = '#e83030';
+  ctx.beginPath();
+  ctx.ellipse(gx, gy, 18, 15, isLeft ? 0.2 : -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
+
+  // Simple lace line
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(gx - 8, gy - 8);
+  ctx.quadraticCurveTo(gx, gy - 12, gx + 8, gy - 8);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHeadClassic(ctx, x, y, suitColor, eyeState, mouthState, oppName) {
+  ctx.save();
+  ctx.translate(x, y);
+  // 15% bigger head
+  ctx.scale(1.15, 1.15);
+  const OL = 2.5;
+
+  // Head shape — flat solid peach skin
+  ctx.fillStyle = '#fdd9b5';
+  ctx.beginPath();
+  ctx.moveTo(-28, -15);
+  ctx.quadraticCurveTo(-30, -30, -20, -38);
+  ctx.quadraticCurveTo(0, -45, 20, -38);
+  ctx.quadraticCurveTo(30, -30, 28, -15);
+  if (oppName === 'The CEO') {
+    ctx.quadraticCurveTo(28, 8, 14, 20);
+    ctx.lineTo(0, 28);
+    ctx.lineTo(-14, 20);
+    ctx.quadraticCurveTo(-28, 8, -28, -15);
+  } else if (oppName === 'The Intern') {
+    ctx.quadraticCurveTo(30, 12, 18, 24);
+    ctx.quadraticCurveTo(0, 32, -18, 24);
+    ctx.quadraticCurveTo(-30, 12, -28, -15);
+  } else {
+    ctx.quadraticCurveTo(28, 10, 18, 22);
+    ctx.quadraticCurveTo(0, 30, -18, 22);
+    ctx.quadraticCurveTo(-28, 10, -28, -15);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
+
+  // Hair — solid fill, basic shape, no strands
+  let hairColor = '#2a1a0a';
+  if (oppName === 'The CEO') {
+    hairColor = '#999';
+  } else if (oppName === 'The Intern') {
+    hairColor = '#6b4226';
+  }
+  ctx.fillStyle = hairColor;
+  ctx.beginPath();
+  ctx.moveTo(-30, -15);
+  ctx.quadraticCurveTo(-32, -35, -20, -42);
+  ctx.quadraticCurveTo(0, -50, 20, -42);
+  ctx.quadraticCurveTo(32, -35, 30, -15);
+  ctx.quadraticCurveTo(28, -28, 22, -30);
+  ctx.quadraticCurveTo(10, -38, -10, -38);
+  ctx.quadraticCurveTo(-22, -35, -25, -28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
+
+  // Intern spiky hair — simple outlined triangles
+  if (oppName === 'The Intern') {
+    ctx.fillStyle = hairColor;
+    const spikes = [[-12, -42, -8, -55, -3, -44], [5, -42, 12, -56, 16, -42], [-22, -35, -28, -48, -18, -38]];
+    for (const s of spikes) {
+      ctx.beginPath();
+      ctx.moveTo(s[0], s[1]);
+      ctx.lineTo(s[2], s[3]);
+      ctx.lineTo(s[4], s[5]);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = OL;
+      ctx.stroke();
+    }
+  }
+
+  // Manager glasses — simple black rectangles
+  if (oppName === 'Middle Manager') {
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(-22, -12, 16, 10);
+    ctx.strokeRect(6, -12, 16, 10);
+    ctx.beginPath();
+    ctx.moveTo(-6, -7);
+    ctx.lineTo(6, -7);
+    ctx.stroke();
+  }
+
+  // Eyes — simple cartoon style
+  drawCartoonEye(ctx, -12, -8, eyeState);
+  drawCartoonEye(ctx, 12, -8, eyeState);
+
+  // Eyebrows — thick simple lines
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2.5;
+  if (eyeState === 'narrow' || mouthState === 'smirk') {
+    ctx.beginPath();
+    ctx.moveTo(-20, -18);
+    ctx.lineTo(-6, -15);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(20, -18);
+    ctx.lineTo(6, -15);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(-19, -17);
+    ctx.lineTo(-5, -17);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(19, -17);
+    ctx.lineTo(5, -17);
+    ctx.stroke();
+  }
+
+  // Nose — simple line
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, -2);
+  ctx.lineTo(2, 5);
+  ctx.lineTo(0, 7);
+  ctx.stroke();
+
+  // Mouth — simple line/curve, no teeth detail
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  if (mouthState === 'neutral') {
+    ctx.beginPath();
+    ctx.moveTo(-8, 14);
+    ctx.lineTo(8, 14);
+    ctx.stroke();
+  } else if (mouthState === 'open') {
+    ctx.fillStyle = '#401010';
+    ctx.beginPath();
+    ctx.ellipse(0, 15, 7, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else if (mouthState === 'smirk') {
+    ctx.beginPath();
+    ctx.moveTo(-6, 14);
+    ctx.quadraticCurveTo(0, 13, 8, 16);
+    ctx.stroke();
+  } else if (mouthState === 'ouch') {
+    ctx.beginPath();
+    ctx.moveTo(-6, 16);
+    ctx.lineTo(-3, 13);
+    ctx.lineTo(0, 16);
+    ctx.lineTo(3, 13);
+    ctx.lineTo(6, 16);
+    ctx.stroke();
+  }
+
+  // Ears — flat skin with outline
+  ctx.fillStyle = '#fdd9b5';
+  ctx.beginPath();
+  ctx.ellipse(-29, -5, 5, 8, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(29, -5, 5, 8, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawCartoonEye(ctx, x, y, eyeState) {
+  if (eyeState === 'normal') {
+    // White oval + solid black circle pupil
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 7, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(x, y + 1, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (eyeState === 'narrow') {
+    // Half-closed white slits with dot pupils
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 7, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (eyeState === 'dizzy') {
+    // X-eyes
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y - 4);
+    ctx.lineTo(x + 4, y + 4);
+    ctx.moveTo(x + 4, y - 4);
+    ctx.lineTo(x - 4, y + 4);
+    ctx.stroke();
+  } else if (eyeState === 'closed') {
+    // Simple curved line
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - 6, y);
+    ctx.quadraticCurveTo(x, y + 4, x + 6, y);
+    ctx.stroke();
+  }
 }
 
 function drawArm(ctx, startX, startY, angle, gloveExtend, suitColor, isLeft) {
@@ -2675,6 +2966,7 @@ function drawPlayerClassic(ctx, pose, player) {
   ctx.save();
   const W = 800, H = 600;
   const baseX = 400, baseY = 480;
+  const OL = 2.5;
 
   const { bodyOffsetX, bodyOffsetY, bodyRotate,
           shoulderTiltL, shoulderTiltR,
@@ -2684,18 +2976,14 @@ function drawPlayerClassic(ctx, pose, player) {
   ctx.translate(baseX + bodyOffsetX, baseY + bodyOffsetY);
   ctx.rotate(bodyRotate);
 
-  // Shadow on floor
+  // Shadow on floor — flat
   ctx.fillStyle = 'rgba(0,0,0,0.25)';
   ctx.beginPath();
   ctx.ellipse(0, 40, 70, 12, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Upper back / torso (white tank top, seen from behind)
-  const tankGrad = ctx.createLinearGradient(-50, -60, 50, 30);
-  tankGrad.addColorStop(0, '#f0f0f0');
-  tankGrad.addColorStop(0.5, '#e0e0e0');
-  tankGrad.addColorStop(1, '#c8c8c8');
-  ctx.fillStyle = tankGrad;
+  // Upper back / torso — flat white tank top + outline, no muscle detail
+  ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.moveTo(-52, -30 + shoulderTiltL);
   ctx.quadraticCurveTo(-55, 0, -45, 40);
@@ -2705,9 +2993,12 @@ function drawPlayerClassic(ctx, pose, player) {
   ctx.quadraticCurveTo(-30, -42, -52, -30 + shoulderTiltL);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
 
-  // Tank top straps
-  ctx.fillStyle = '#e8e8e8';
+  // Tank top straps — flat white + outline
+  ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.moveTo(-18, -60);
   ctx.quadraticCurveTo(-22, -45, -28, -35);
@@ -2716,6 +3007,9 @@ function drawPlayerClassic(ctx, pose, player) {
   ctx.quadraticCurveTo(-35, -42, -22, -55);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(18, -60);
   ctx.quadraticCurveTo(22, -45, 28, -35);
@@ -2724,70 +3018,72 @@ function drawPlayerClassic(ctx, pose, player) {
   ctx.quadraticCurveTo(35, -42, 22, -55);
   ctx.closePath();
   ctx.fill();
-
-  // Back muscle definition (subtle lines)
-  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-  ctx.lineWidth = 1.5;
-  // Spine
-  ctx.beginPath();
-  ctx.moveTo(0, -35);
-  ctx.quadraticCurveTo(1, 0, 0, 35);
-  ctx.stroke();
-  // Shoulder blades
-  ctx.beginPath();
-  ctx.moveTo(-15, -20);
-  ctx.quadraticCurveTo(-25, -5, -18, 10);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(15, -20);
-  ctx.quadraticCurveTo(25, -5, 18, 10);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
   ctx.stroke();
 
-  // Skin color for shoulders/neck
-  const skinColor = '#d4a070';
-  const skinDark = '#b88050';
+  // Skin color for shoulders/neck — flat solid
+  const skinColor = '#fdd9b5';
 
-  // Left shoulder (exposed skin above strap)
+  // Left shoulder
   ctx.fillStyle = skinColor;
   ctx.beginPath();
   ctx.ellipse(-48, -32 + shoulderTiltL, 14, 10, -0.3, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
 
   // Right shoulder
+  ctx.fillStyle = skinColor;
   ctx.beginPath();
   ctx.ellipse(48, -32 + shoulderTiltR, 14, 10, 0.3, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
 
-  // Left arm (foreshortened, going toward screen)
+  // Left arm — flat skin + outline
   ctx.save();
   ctx.translate(-48, -25 + shoulderTiltL);
-  const lArmAngle = Math.atan2(leftGloveY - (-25 + shoulderTiltL), leftGloveX - (-48));
-  // Upper arm skin
-  const armGrad = ctx.createLinearGradient(0, 0, leftGloveX + 48, leftGloveY + 25 - shoulderTiltL);
-  armGrad.addColorStop(0, skinColor);
-  armGrad.addColorStop(1, skinDark);
-  ctx.strokeStyle = armGrad;
+  ctx.strokeStyle = skinColor;
   ctx.lineWidth = 16;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.lineTo((leftGloveX + 48) * 0.6, (leftGloveY + 25 - shoulderTiltL) * 0.6);
   ctx.stroke();
+  // Black outline for arm
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo((leftGloveX + 48) * 0.6, (leftGloveY + 25 - shoulderTiltL) * 0.6);
+  ctx.stroke();
+  ctx.globalCompositeOperation = 'source-over';
   ctx.restore();
 
-  // Right arm
+  // Right arm — flat skin + outline
   ctx.save();
   ctx.translate(48, -25 + shoulderTiltR);
-  const rArmGrad = ctx.createLinearGradient(0, 0, rightGloveX - 48, rightGloveY + 25 - shoulderTiltR);
-  rArmGrad.addColorStop(0, skinColor);
-  rArmGrad.addColorStop(1, skinDark);
-  ctx.strokeStyle = rArmGrad;
+  ctx.strokeStyle = skinColor;
   ctx.lineWidth = 16;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.lineTo((rightGloveX - 48) * 0.6, (rightGloveY + 25 - shoulderTiltR) * 0.6);
   ctx.stroke();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo((rightGloveX - 48) * 0.6, (rightGloveY + 25 - shoulderTiltR) * 0.6);
+  ctx.stroke();
+  ctx.globalCompositeOperation = 'source-over';
   ctx.restore();
 
   // Glow effect for special
@@ -2803,65 +3099,96 @@ function drawPlayerClassic(ctx, pose, player) {
     ctx.shadowBlur = 25 * flashAlpha;
   }
 
-  // Gloves
+  // Gloves — draw shared glove then add thick outline
   drawGlove(ctx, leftGloveX, leftGloveY, true);
+  // Outline over left glove
+  ctx.save();
+  ctx.translate(leftGloveX, leftGloveY);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.beginPath();
+  ctx.moveTo(-28, -10);
+  ctx.quadraticCurveTo(-32, -25, -20, -30);
+  ctx.quadraticCurveTo(0, -35, 20, -28);
+  ctx.quadraticCurveTo(32, -20, 30, 0);
+  ctx.quadraticCurveTo(28, 18, 10, 22);
+  ctx.quadraticCurveTo(-5, 24, -20, 18);
+  ctx.quadraticCurveTo(-30, 10, -28, -10);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+
   drawGlove(ctx, rightGloveX, rightGloveY, false);
+  // Outline over right glove
+  ctx.save();
+  ctx.translate(rightGloveX, rightGloveY);
+  ctx.scale(-1, 1);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.beginPath();
+  ctx.moveTo(-28, -10);
+  ctx.quadraticCurveTo(-32, -25, -20, -30);
+  ctx.quadraticCurveTo(0, -35, 20, -28);
+  ctx.quadraticCurveTo(32, -20, 30, 0);
+  ctx.quadraticCurveTo(28, 18, 10, 22);
+  ctx.quadraticCurveTo(-5, 24, -20, 18);
+  ctx.quadraticCurveTo(-30, 10, -28, -10);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
 
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
-  // Neck
+  // Neck — flat skin + outline
   ctx.fillStyle = skinColor;
   ctx.fillRect(-8, -62, 16, 16);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.strokeRect(-8, -62, 16, 16);
 
-  // Head (back of head - dark short hair)
+  // Head (back of head) — slightly oversized, flat dark fill + outline
   const headX = headOffsetX;
   const headY = -80 + headOffsetY;
   ctx.save();
   ctx.translate(headX, headY);
+  // 10% bigger head for cartoon proportion
+  ctx.scale(1.1, 1.1);
 
-  // Head shape (back view - slightly oval)
-  const headGrad = ctx.createRadialGradient(0, 0, 5, 0, -3, 28);
-  headGrad.addColorStop(0, '#2a1a0a');
-  headGrad.addColorStop(0.7, '#1a0e05');
-  headGrad.addColorStop(1, '#0e0804');
-  ctx.fillStyle = headGrad;
+  // Solid dark hair fill + outline
+  ctx.fillStyle = '#2a1a0a';
   ctx.beginPath();
   ctx.ellipse(0, 0, 24, 28, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
 
-  // Hair texture lines (back of head)
-  ctx.strokeStyle = 'rgba(60,40,20,0.4)';
-  ctx.lineWidth = 1;
-  for (let i = -3; i <= 3; i++) {
-    ctx.beginPath();
-    ctx.moveTo(i * 5, -22);
-    ctx.quadraticCurveTo(i * 6, 0, i * 4, 20);
-    ctx.stroke();
-  }
-
-  // Top of hair - slightly rounded
+  // Top of hair
   ctx.fillStyle = '#2a1a0a';
   ctx.beginPath();
   ctx.ellipse(0, -16, 22, 14, 0, Math.PI, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.beginPath();
+  ctx.ellipse(0, -16, 22, 14, 0, Math.PI, Math.PI * 2);
+  ctx.stroke();
 
-  // Ears (visible from behind)
-  ctx.fillStyle = '#d4a070';
+  // Ears — flat skin + outline
+  ctx.fillStyle = skinColor;
   ctx.beginPath();
   ctx.ellipse(-24, 2, 5, 8, -0.1, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
   ctx.beginPath();
   ctx.ellipse(24, 2, 5, 8, 0.1, 0, Math.PI * 2);
   ctx.fill();
-  // Ear inner
-  ctx.fillStyle = '#c08858';
-  ctx.beginPath();
-  ctx.ellipse(-24, 2, 3, 5, -0.1, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(24, 2, 3, 5, 0.1, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = OL;
+  ctx.stroke();
 
   // Neck line at base of head
   ctx.fillStyle = skinColor;
@@ -2880,10 +3207,8 @@ function drawPlayerClassic(ctx, pose, player) {
   if (player.invincible) {
     const pulse = 0.3 + 0.7 * Math.abs(Math.sin(gameTime * 8));
     ctx.save();
-    ctx.shadowColor = `rgba(255,220,80,${pulse})`;
-    ctx.shadowBlur = 25;
     ctx.strokeStyle = `rgba(255,255,200,${pulse * 0.6})`;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.ellipse(0, -30, 60, 80, 0, 0, Math.PI * 2);
     ctx.stroke();
