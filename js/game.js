@@ -1,9 +1,12 @@
 import { clearJustPressed, justPressed } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
-import { createOpponent, updateOpponent, OPP_STATE } from './opponent.js';
+import { updateOpponent, OPP_STATE } from './opponent.js';
 import { processCombat } from './combat.js';
 import { drawRing, drawOpponent, drawPlayer, drawHitEffects, addHitEffect, updateRendererTime } from './renderer.js';
 import { drawHUD, drawTitleScreen, drawIntroScreen, drawResultScreen, drawGameOverScreen, drawKnockdownCount, updateUITime } from './ui.js';
+import { createIntern } from './opponents/intern.js';
+import { createManager } from './opponents/manager.js';
+import { createCEO } from './opponents/ceo.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -27,52 +30,7 @@ export function getCanvas() { return canvas; }
 
 let player = createPlayer();
 
-// Opponent sequence — all use test config for now; real opponents come in Task 5-7
-const opponentConfigs = [
-  {
-    name: 'The Intern',
-    title: 'Mail Room Menace',
-    taunt: '"S-sorry in advance... I really need this promotion!"',
-    health: 60,
-    color: '#4a90d9',
-    idleMinTime: 1.5,
-    idleMaxTime: 2.5,
-    patterns: [
-      { telegraph: 'windUpRight', telegraphDuration: 1.0, attackType: 'hook', direction: 'right', attackDuration: 0.4, recoveryDuration: 2.0, damage: 8, blockable: true },
-      { telegraph: 'windUpLeft', telegraphDuration: 1.0, attackType: 'hook', direction: 'left', attackDuration: 0.4, recoveryDuration: 2.0, damage: 8, blockable: true },
-      { telegraph: 'centerWindUp', telegraphDuration: 1.2, attackType: 'slam', direction: 'center', attackDuration: 0.5, recoveryDuration: 2.0, damage: 15, blockable: false },
-    ],
-  },
-  {
-    name: 'Middle Manager',
-    title: 'Director of Synergy',
-    taunt: '"Let\'s take this offline. Permanently."',
-    health: 80,
-    color: '#7b7b7b',
-    idleMinTime: 1.0,
-    idleMaxTime: 1.8,
-    patterns: [
-      { telegraph: 'adjustTie', telegraphDuration: 0.6, attackType: 'jab', direction: 'center', attackDuration: 0.25, recoveryDuration: 0.8, damage: 10, blockable: true },
-      { telegraph: 'sipCoffee', telegraphDuration: 0.8, attackType: 'uppercut', direction: 'center', attackDuration: 0.3, recoveryDuration: 1.5, damage: 18, blockable: false },
-      { telegraph: 'adjustTie', telegraphDuration: 0.5, attackType: 'jab', direction: 'left', attackDuration: 0.25, recoveryDuration: 0.8, damage: 10, blockable: true },
-    ],
-  },
-  {
-    name: 'The CEO',
-    title: 'Chairman of Pain',
-    taunt: '"...You have 30 seconds. Make them count."',
-    health: 100,
-    color: '#1a1a2e',
-    idleMinTime: 0.6,
-    idleMaxTime: 1.2,
-    goldenParachute: true,
-    patterns: [
-      { telegraph: 'smirk', telegraphDuration: 0.35, attackType: 'jab', direction: 'right', attackDuration: 0.15, recoveryDuration: 0.5, damage: 12, blockable: true },
-      { telegraph: 'adjustCufflinks', telegraphDuration: 0.5, attackType: 'cross', direction: 'center', attackDuration: 0.2, recoveryDuration: 0.75, damage: 20, blockable: false },
-      { telegraph: 'smirk', telegraphDuration: 0.35, attackType: 'jab', direction: 'left', attackDuration: 0.15, recoveryDuration: 0.5, damage: 12, blockable: true },
-    ],
-  },
-];
+const opponentFactories = [createIntern, createManager, createCEO];
 
 let currentOpponentIndex = 0;
 let opponent = null;
@@ -96,7 +54,7 @@ function triggerShake(intensity, duration) {
 }
 
 function spawnOpponent(index) {
-  opponent = createOpponent(opponentConfigs[index]);
+  opponent = opponentFactories[index]();
 }
 
 function resetForNewGame() {
@@ -211,7 +169,7 @@ function update(dt) {
     if (justPressed('Enter')) {
       if (fightWon) {
         currentOpponentIndex++;
-        if (currentOpponentIndex >= opponentConfigs.length) {
+        if (currentOpponentIndex >= opponentFactories.length) {
           currentState = STATE.GAMEOVER;
         } else {
           player = createPlayer();
