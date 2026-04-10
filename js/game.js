@@ -2,8 +2,8 @@ import { clearJustPressed, justPressed } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { updateOpponent, OPP_STATE } from './opponent.js';
 import { processCombat } from './combat.js';
-import { drawRing, drawOpponent, drawPlayer, drawHitEffects, addHitEffect, updateRendererTime } from './renderer.js';
-import { drawHUD, drawTitleScreen, drawIntroScreen, drawResultScreen, drawGameOverScreen, drawKnockdownCount, updateUITime } from './ui.js';
+import { drawRing, drawOpponent, drawPlayer, drawHitEffects, drawHitFlash, addHitEffect, updateRendererTime, drawPlayerKnockdownOverlay, drawTelegraphProp } from './renderer.js';
+import { drawHUD, drawTitleScreen, drawIntroScreen, drawResultScreen, drawGameOverScreen, drawKnockdownCount, drawTransition, updateTransition, startTransition, drawFlavorText, updateFlavorText, showFlavorText, updateUITime, resetIntroTimer } from './ui.js';
 import { createIntern } from './opponents/intern.js';
 import { createManager } from './opponents/manager.js';
 import { createCEO } from './opponents/ceo.js';
@@ -48,9 +48,30 @@ const TKO_COUNT = 3;
 // Screen shake
 let screenShake = { intensity: 0, duration: 0 };
 
+// State transition
+let pendingState = null;
+
+// Flavor text for knockdowns
+const FLAVOR_TEXT = {
+  'The Intern': 'O-ow... okay one more try...',
+  'Middle Manager': 'This will be reflected in your review...',
+  'The CEO': '...Interesting.',
+};
+
 function triggerShake(intensity, duration) {
   screenShake.intensity = intensity;
   screenShake.duration = duration;
+}
+
+function transitionTo(newState) {
+  pendingState = newState;
+  startTransition(() => {
+    currentState = pendingState;
+    pendingState = null;
+    if (newState === STATE.INTRO || newState === STATE.TITLE) {
+      resetIntroTimer();
+    }
+  });
 }
 
 function spawnOpponent(index) {
@@ -66,6 +87,8 @@ function resetForNewGame() {
 function update(dt) {
   updateRendererTime(dt);
   updateUITime(dt);
+  updateTransition(dt);
+  updateFlavorText(dt);
 
   // Decay screen shake
   if (screenShake.duration > 0) {
@@ -76,19 +99,21 @@ function update(dt) {
     }
   }
 
+  if (pendingState !== null) return;
+
   if (currentState === STATE.TITLE) {
     if (justPressed('Enter')) {
       currentOpponentIndex = 0;
       player = createPlayer();
       spawnOpponent(0);
-      currentState = STATE.INTRO;
+      transitionTo(STATE.INTRO);
     }
     return;
   }
 
   if (currentState === STATE.INTRO) {
     if (justPressed('Enter')) {
-      currentState = STATE.FIGHT;
+      transitionTo(STATE.FIGHT);
     }
     return;
   }
@@ -118,6 +143,9 @@ function update(dt) {
       if (result.knockdown === 'opponent') {
         opponent.state = OPP_STATE.DOWN;
         opponent.knockdowns++;
+        if (FLAVOR_TEXT[opponent.name]) {
+          showFlavorText(FLAVOR_TEXT[opponent.name]);
+        }
       } else {
         player.knockdowns++;
       }
@@ -170,14 +198,14 @@ function update(dt) {
       if (fightWon) {
         currentOpponentIndex++;
         if (currentOpponentIndex >= opponentFactories.length) {
-          currentState = STATE.GAMEOVER;
+          transitionTo(STATE.GAMEOVER);
         } else {
           player = createPlayer();
           spawnOpponent(currentOpponentIndex);
-          currentState = STATE.INTRO;
+          transitionTo(STATE.INTRO);
         }
       } else {
-        currentState = STATE.GAMEOVER;
+        transitionTo(STATE.GAMEOVER);
       }
     }
   }
@@ -185,7 +213,7 @@ function update(dt) {
   if (currentState === STATE.GAMEOVER) {
     if (justPressed('Enter')) {
       resetForNewGame();
-      currentState = STATE.TITLE;
+      transitionTo(STATE.TITLE);
     }
   }
 }
@@ -218,7 +246,9 @@ function render() {
     case STATE.FIGHT:
       drawRing(ctx);
       drawOpponent(ctx, opponent);
+      drawTelegraphProp(ctx, opponent);
       drawHitEffects(ctx);
+      drawHitFlash(ctx);
       drawPlayer(ctx, player);
       drawHUD(ctx, player, opponent);
       break;
@@ -228,7 +258,11 @@ function render() {
       drawOpponent(ctx, opponent);
       drawPlayer(ctx, player);
       drawHUD(ctx, player, opponent);
+      if (knockdownTarget === 'player') {
+        drawPlayerKnockdownOverlay(ctx, knockdownTimer);
+      }
       drawKnockdownCount(ctx, knockdownTimer, knockdownTarget === 'player');
+      drawFlavorText(ctx);
       break;
 
     case STATE.RESULT:
@@ -239,6 +273,9 @@ function render() {
       drawGameOverScreen(ctx, fightWon);
       break;
   }
+
+  // Draw transition overlay on top of everything
+  drawTransition(ctx);
 
   ctx.restore();
 }

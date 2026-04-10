@@ -1,8 +1,10 @@
 let gameTime = 0;
 let hitEffects = [];
+let hitFlashTimer = 0;
 
 export function updateRendererTime(dt) {
   gameTime += dt;
+  if (hitFlashTimer > 0) hitFlashTimer -= dt;
   hitEffects = hitEffects.filter(e => {
     e.life -= dt;
     return e.life > 0;
@@ -11,6 +13,14 @@ export function updateRendererTime(dt) {
 
 export function addHitEffect(x, y) {
   hitEffects.push({ x, y, life: 0.3, maxLife: 0.3 });
+  hitFlashTimer = 0.05;
+}
+
+export function drawHitFlash(ctx) {
+  if (hitFlashTimer > 0) {
+    ctx.fillStyle = `rgba(255,255,255,${hitFlashTimer / 0.05 * 0.25})`;
+    ctx.fillRect(0, 0, 800, 600);
+  }
 }
 
 // --- RING ---
@@ -152,31 +162,85 @@ export function drawOpponent(ctx, opp) {
       offsetY = breathe;
       offsetX = sway;
       break;
-    case 'telegraph':
-      if (opp.telegraphType === 'windUpRight' || opp.telegraphType === 'adjustCufflinks' || opp.telegraphType === 'smirk') {
-        rightArmAngle = -0.6;
-        offsetX = 8;
-        eyeState = 'narrow';
-      } else if (opp.telegraphType === 'windUpLeft' || opp.telegraphType === 'feintLeft') {
-        leftArmAngle = 0.6;
-        offsetX = -8;
-        eyeState = 'narrow';
-      } else if (opp.telegraphType === 'centerWindUp' || opp.telegraphType === 'crackKnuckles' || opp.telegraphType === 'raiseClipboard' || opp.telegraphType === 'flailWindUp') {
-        offsetY = -15;
-        leftArmAngle = 0.4;
-        rightArmAngle = -0.4;
+    case 'telegraph': {
+      const tProg = 0.5 + 0.5 * Math.sin(gameTime * 12);
+      if (opp.telegraphType === 'windUpRight') {
+        rightArmAngle = -0.9 - tProg * 0.3;
+        rightGloveExtend = -25;
+        offsetX = 15 + tProg * 5;
+        rotate = -0.06;
         eyeState = 'narrow';
         mouthState = 'smirk';
-      } else if (opp.telegraphType === 'sipCoffee' || opp.telegraphType === 'checkPhone') {
-        rightArmAngle = -0.8;
+      } else if (opp.telegraphType === 'windUpLeft') {
+        leftArmAngle = 0.9 + tProg * 0.3;
+        leftGloveExtend = -25;
+        offsetX = -15 - tProg * 5;
+        rotate = 0.06;
+        eyeState = 'narrow';
+        mouthState = 'smirk';
+      } else if (opp.telegraphType === 'adjustCufflinks') {
+        rightArmAngle = -0.5;
+        rightGloveExtend = -20;
+        offsetX = 5;
+        eyeState = 'narrow';
+        mouthState = 'neutral';
+      } else if (opp.telegraphType === 'smirk') {
+        offsetX = tProg * 3;
+        eyeState = 'narrow';
+        mouthState = 'smirk';
+        rightArmAngle = -0.2;
+      } else if (opp.telegraphType === 'feintLeft') {
+        offsetX = -20 - tProg * 8;
+        leftArmAngle = 0.5;
+        rightArmAngle = -0.8 - tProg * 0.3;
+        rightGloveExtend = -20;
+        rotate = 0.08;
+        eyeState = 'narrow';
+      } else if (opp.telegraphType === 'crackKnuckles') {
+        leftArmAngle = 0.6;
+        rightArmAngle = -0.6;
+        leftGloveExtend = 15 + tProg * 5;
+        rightGloveExtend = 15 + tProg * 5;
+        offsetY = -5;
+        eyeState = 'narrow';
+        mouthState = 'smirk';
+      } else if (opp.telegraphType === 'raiseClipboard') {
+        rightArmAngle = -1.0 - tProg * 0.3;
+        rightGloveExtend = -30;
+        offsetY = -10;
+        eyeState = 'narrow';
+        mouthState = 'smirk';
+      } else if (opp.telegraphType === 'flailWindUp') {
+        leftArmAngle = 0.5 + Math.sin(gameTime * 15) * 0.4;
+        rightArmAngle = -0.5 + Math.cos(gameTime * 15) * 0.4;
+        leftGloveExtend = -15 + Math.sin(gameTime * 10) * 10;
+        rightGloveExtend = -15 + Math.cos(gameTime * 10) * 10;
+        offsetY = -12;
+        offsetX = Math.sin(gameTime * 8) * 5;
+        eyeState = 'normal';
+        mouthState = 'open';
+      } else if (opp.telegraphType === 'sipCoffee') {
+        rightArmAngle = -1.1;
+        rightGloveExtend = -30;
+        offsetY = breathe;
+        eyeState = 'narrow';
+        mouthState = 'neutral';
+      } else if (opp.telegraphType === 'checkPhone') {
+        rightArmAngle = -0.9;
+        rightGloveExtend = -25;
+        offsetY = breathe;
+        offsetX = -3;
+        eyeState = 'narrow';
+      } else if (opp.telegraphType === 'adjustTie') {
+        rightArmAngle = -0.4;
         rightGloveExtend = -20;
         offsetY = breathe;
-      } else if (opp.telegraphType === 'adjustTie') {
-        offsetY = breathe;
-        rightArmAngle = -0.3;
-        rightGloveExtend = -15;
+        offsetX = 2;
+        eyeState = 'narrow';
+        mouthState = 'neutral';
       }
       break;
+    }
     case 'attack':
       offsetY = 25;
       scaleX = 1.05;
@@ -213,13 +277,16 @@ export function drawOpponent(ctx, opp) {
       leftArmAngle = 0.5;
       rightArmAngle = -0.5;
       break;
-    case 'down':
+    case 'down': {
+      const fallT = Math.min(1, (gameTime % 100));
       offsetY = 120;
-      rotate = -0.4;
-      scaleY = 0.7;
+      rotate = -0.5;
+      scaleY = 0.65;
+      scaleX = 1.1;
       eyeState = 'closed';
       mouthState = 'ouch';
       break;
+    }
   }
 
   ctx.translate(baseX + offsetX, baseY + offsetY);
@@ -814,6 +881,90 @@ export function drawHitEffects(ctx) {
     ctx.globalAlpha = 1;
     ctx.restore();
   }
+}
+
+// --- PLAYER KNOCKDOWN OVERLAY ---
+
+export function drawPlayerKnockdownOverlay(ctx, timer) {
+  const W = 800, H = 600;
+  // Red vignette
+  const vig = ctx.createRadialGradient(W / 2, H / 2, 100, W / 2, H / 2, 450);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(0.7, 'rgba(80,0,0,0.3)');
+  vig.addColorStop(1, 'rgba(120,0,0,0.6)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+
+  // Screen tilt via slight rotation effect
+  const tiltAmt = Math.sin(timer * 2) * 0.02;
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(tiltAmt);
+  ctx.translate(-W / 2, -H / 2);
+  ctx.restore();
+}
+
+// --- TELEGRAPH PROP DRAWING ---
+
+export function drawTelegraphProp(ctx, opp) {
+  if (opp.state !== 'telegraph') return;
+  ctx.save();
+  ctx.translate(400, 300);
+
+  if (opp.telegraphType === 'sipCoffee') {
+    // Coffee mug near right hand
+    ctx.translate(65, -40);
+    ctx.fillStyle = '#e8e0d0';
+    ctx.fillRect(-8, -12, 16, 18);
+    ctx.fillStyle = '#6b4226';
+    ctx.fillRect(-6, -10, 12, 14);
+    // Handle
+    ctx.strokeStyle = '#e8e0d0';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(10, -3, 6, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+    // Steam
+    const st = gameTime * 4;
+    ctx.strokeStyle = 'rgba(200,200,200,0.4)';
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-4 + i * 4, -14);
+      ctx.quadraticCurveTo(-4 + i * 4 + Math.sin(st + i) * 3, -22, -4 + i * 4 + Math.sin(st + i + 1) * 2, -28);
+      ctx.stroke();
+    }
+  } else if (opp.telegraphType === 'raiseClipboard') {
+    ctx.translate(58, -55);
+    ctx.rotate(-0.15);
+    ctx.fillStyle = '#8b6914';
+    ctx.fillRect(-10, -18, 22, 30);
+    ctx.fillStyle = '#f5f0e0';
+    ctx.fillRect(-8, -14, 18, 24);
+    // Lines on clipboard
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-5, -10 + i * 5);
+      ctx.lineTo(7, -10 + i * 5);
+      ctx.stroke();
+    }
+    // Clip
+    ctx.fillStyle = '#aaa';
+    ctx.fillRect(-4, -20, 10, 5);
+  } else if (opp.telegraphType === 'checkPhone') {
+    ctx.translate(60, -45);
+    ctx.rotate(-0.2);
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.roundRect(-7, -12, 14, 22, 2);
+    ctx.fill();
+    ctx.fillStyle = '#4488cc';
+    ctx.fillRect(-5, -9, 10, 16);
+  }
+
+  ctx.restore();
 }
 
 // --- COLOR HELPERS ---
