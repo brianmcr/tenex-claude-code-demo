@@ -256,8 +256,8 @@ export function drawOpponent(ctx, opp) {
         eyeState = 'narrow';
         mouthState = 'neutral';
       }
-      // CEO smirk telegraph: add red/orange glow outline as universal "incoming!" signal
-      if (opp.telegraphType === 'smirk' || opp.telegraphType === 'adjustCufflinks') {
+      // Red/orange glow outline for unblockable attacks
+      if (opp.currentPattern && opp.currentPattern.blockable === false) {
         const glowPulse = 0.4 + 0.6 * Math.abs(Math.sin(gameTime * 8));
         ctx.save();
         ctx.shadowColor = `rgba(255,100,0,${glowPulse})`;
@@ -505,7 +505,9 @@ function drawHead(ctx, x, y, suitColor, eyeState, mouthState, oppName) {
   ctx.fill();
 
   // Hair - character specific
+  let hairColor = '#2a1a0a'; // default (manager)
   if (oppName === 'The CEO') {
+    hairColor = '#888';
     // Silver/white slicked hair
     const silverGrad = ctx.createLinearGradient(-20, -45, 20, -30);
     silverGrad.addColorStop(0, '#888');
@@ -524,6 +526,7 @@ function drawHead(ctx, x, y, suitColor, eyeState, mouthState, oppName) {
     ctx.closePath();
     ctx.fill();
   } else if (oppName === 'The Intern') {
+    hairColor = '#6b4226';
     // Messy spiky brown hair
     ctx.fillStyle = '#6b4226';
     ctx.beginPath();
@@ -853,6 +856,13 @@ export function drawPlayer(ctx, player) {
     ctx.shadowBlur = 30;
   }
 
+  // Block flash glow
+  if (player.blockFlashTimer > 0) {
+    const flashAlpha = player.blockFlashTimer / 0.3;
+    ctx.shadowColor = `rgba(255,255,200,${flashAlpha})`;
+    ctx.shadowBlur = 25 * flashAlpha;
+  }
+
   drawGlove(ctx, leftX, leftY, true);
   drawGlove(ctx, rightX, rightY, false);
 
@@ -996,8 +1006,8 @@ export function drawHitEffects(ctx) {
 
 // --- COMIC TEXT EFFECTS ---
 
-export function addComicText(x, y) {
-  const word = COMIC_WORDS[Math.floor(Math.random() * COMIC_WORDS.length)];
+export function addComicText(x, y, customWord) {
+  const word = customWord || COMIC_WORDS[Math.floor(Math.random() * COMIC_WORDS.length)];
   comicTexts.push({
     x: x + (Math.random() - 0.5) * 40,
     y: y - 20 + (Math.random() - 0.5) * 20,
@@ -1045,13 +1055,6 @@ export function drawPlayerKnockdownOverlay(ctx, timer) {
   ctx.fillStyle = vig;
   ctx.fillRect(0, 0, W, H);
 
-  // Screen tilt via slight rotation effect
-  const tiltAmt = Math.sin(timer * 2) * 0.02;
-  ctx.save();
-  ctx.translate(W / 2, H / 2);
-  ctx.rotate(tiltAmt);
-  ctx.translate(-W / 2, -H / 2);
-  ctx.restore();
 }
 
 // --- TELEGRAPH PROP DRAWING ---

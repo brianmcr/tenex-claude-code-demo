@@ -148,8 +148,13 @@ function update(dt) {
       triggerShake(4, 0.15);
       const hx = 400 + (Math.random() - 0.5) * 60;
       const hy = 280 + (Math.random() - 0.5) * 40;
-      addHitEffect(hx, hy);
-      addComicText(hx, hy);
+      if (opponent.state !== OPP_STATE.IDLE) {
+        addHitEffect(hx, hy);
+        addComicText(hx, hy);
+      }
+    }
+    if (result.blocked) {
+      addComicText(400, 500, 'BLOCKED!');
     }
 
     if (player.stars > prevStars) {
@@ -279,14 +284,45 @@ function render() {
       break;
 
     case STATE.KNOCKDOWN:
+      if (knockdownTarget === 'player') {
+        const tiltAmt = Math.sin(knockdownTimer * 2) * 0.02;
+        ctx.save();
+        ctx.translate(400, 300);
+        ctx.rotate(tiltAmt);
+        ctx.translate(-400, -300);
+      }
       drawRing(ctx);
       drawOpponent(ctx, opponent);
       drawPlayer(ctx, player);
+      if (knockdownTarget === 'player') {
+        ctx.restore();
+      }
       drawHUD(ctx, player, opponent, roundTimer);
       if (knockdownTarget === 'player') {
         drawPlayerKnockdownOverlay(ctx, knockdownTimer);
       }
       drawKnockdownCount(ctx, knockdownTimer, knockdownTarget === 'player');
+      if (knockdownTarget === 'player') {
+        const pct = Math.min(1, knockdownMashCount / PLAYER_MASH_THRESHOLD);
+        const barW = 300, barH = 20, barX = 250, barY = 555;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
+        ctx.fillStyle = '#333';
+        ctx.fillRect(barX, barY, barW, barH);
+        const fillColor = pct > 0.7 ? '#44dd66' : pct > 0.4 ? '#ddaa22' : '#dd4444';
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(barX, barY, barW * pct, barH);
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(barX, barY, barW * pct, barH / 3);
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barW, barH);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${knockdownMashCount} / ${PLAYER_MASH_THRESHOLD}`, 400, barY + 15);
+        ctx.textAlign = 'left';
+      }
       drawFlavorText(ctx);
       break;
 

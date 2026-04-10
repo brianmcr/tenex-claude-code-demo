@@ -20,6 +20,7 @@ export function createPlayer() {
 
     action: 'idle',     // idle, punchLeft, punchRight, dodgeLeft, dodgeRight, block, special, stunned
     actionTimer: 0,
+    blockFlashTimer: 0,
     mashCount: 0,       // for knockdown recovery
 
     get punchPower() {
@@ -32,6 +33,8 @@ export function createPlayer() {
 }
 
 export function updatePlayer(p, dt) {
+  if (p.blockFlashTimer > 0) p.blockFlashTimer -= dt;
+
   if (p.action === 'idle' || p.action === 'block') {
     p.stamina = Math.min(p.maxStamina, p.stamina + STAMINA_REGEN * dt);
   }

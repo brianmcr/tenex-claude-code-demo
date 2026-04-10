@@ -27,6 +27,7 @@ export function processCombat(player, opp, dt) {
       } else if (blocked) {
         stunOpponent(opp, BLOCK_STUN_DURATION);
         result.blocked = true;
+        player.blockFlashTimer = 0.3;
       } else if (dodged) {
         opp.state = OPP_STATE.RECOVERY;
         opp.stateTimer = pattern.recoveryDuration;
