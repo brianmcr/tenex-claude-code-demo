@@ -2,8 +2,8 @@ import { clearJustPressed, justPressed } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { updateOpponent, OPP_STATE } from './opponent.js';
 import { processCombat } from './combat.js';
-import { drawRing, drawOpponent, drawPlayer, drawHitEffects, drawHitFlash, addHitEffect, updateRendererTime, drawPlayerKnockdownOverlay, drawTelegraphProp } from './renderer.js';
-import { drawHUD, drawTitleScreen, drawIntroScreen, drawResultScreen, drawGameOverScreen, drawKnockdownCount, drawTransition, updateTransition, startTransition, drawFlavorText, updateFlavorText, showFlavorText, updateUITime, resetIntroTimer } from './ui.js';
+import { drawRing, drawOpponent, drawPlayer, drawHitEffects, drawHitFlash, addHitEffect, updateRendererTime, drawPlayerKnockdownOverlay, drawTelegraphProp, addComicText, drawComicTexts } from './renderer.js';
+import { drawHUD, drawTitleScreen, drawIntroScreen, drawResultScreen, drawGameOverScreen, drawKnockdownCount, drawTransition, updateTransition, startTransition, drawFlavorText, updateFlavorText, showFlavorText, updateUITime, resetIntroTimer, notifyStarEarned } from './ui.js';
 import { createIntern } from './opponents/intern.js';
 import { createManager } from './opponents/manager.js';
 import { createCEO } from './opponents/ceo.js';
@@ -42,14 +42,19 @@ let knockdownTimer = 0;
 let knockdownMashCount = 0;
 const KNOCKDOWN_PAUSE = 2.0;
 const PLAYER_KNOCKDOWN_TIME = 10.0;
-const PLAYER_MASH_THRESHOLD = 15;
+const PLAYER_MASH_THRESHOLD = 25;
 const TKO_COUNT = 3;
+
+// Round timer
+const ROUND_TIME = 99;
+let roundTimer = ROUND_TIME;
 
 // Screen shake
 let screenShake = { intensity: 0, duration: 0 };
 
 // State transition
 let pendingState = null;
+let prevStars = 0;
 
 // Flavor text for knockdowns
 const FLAVOR_TEXT = {
@@ -76,6 +81,7 @@ function transitionTo(newState) {
 
 function spawnOpponent(index) {
   opponent = opponentFactories[index]();
+  roundTimer = ROUND_TIME;
 }
 
 function resetForNewGame() {
@@ -122,6 +128,16 @@ function update(dt) {
     updatePlayer(player, dt);
     updateOpponent(opponent, dt);
 
+    roundTimer -= dt;
+    if (roundTimer <= 0) {
+      roundTimer = 0;
+      const playerPct = player.health / player.maxHealth;
+      const oppPct = opponent.health / opponent.maxHealth;
+      fightWon = playerPct >= oppPct;
+      currentState = STATE.RESULT;
+      return;
+    }
+
     const result = processCombat(player, opponent, dt);
 
     if (result.playerHit) {
@@ -130,8 +146,16 @@ function update(dt) {
     }
     if (result.oppHit) {
       triggerShake(4, 0.15);
-      addHitEffect(400 + (Math.random() - 0.5) * 60, 280 + (Math.random() - 0.5) * 40);
+      const hx = 400 + (Math.random() - 0.5) * 60;
+      const hy = 280 + (Math.random() - 0.5) * 40;
+      addHitEffect(hx, hy);
+      addComicText(hx, hy);
     }
+
+    if (player.stars > prevStars) {
+      notifyStarEarned();
+    }
+    prevStars = player.stars;
 
     if (result.knockdown) {
       currentState = STATE.KNOCKDOWN;
@@ -248,16 +272,17 @@ function render() {
       drawOpponent(ctx, opponent);
       drawTelegraphProp(ctx, opponent);
       drawHitEffects(ctx);
+      drawComicTexts(ctx);
       drawHitFlash(ctx);
       drawPlayer(ctx, player);
-      drawHUD(ctx, player, opponent);
+      drawHUD(ctx, player, opponent, roundTimer);
       break;
 
     case STATE.KNOCKDOWN:
       drawRing(ctx);
       drawOpponent(ctx, opponent);
       drawPlayer(ctx, player);
-      drawHUD(ctx, player, opponent);
+      drawHUD(ctx, player, opponent, roundTimer);
       if (knockdownTarget === 'player') {
         drawPlayerKnockdownOverlay(ctx, knockdownTimer);
       }
@@ -266,7 +291,7 @@ function render() {
       break;
 
     case STATE.RESULT:
-      drawResultScreen(ctx, fightWon);
+      drawResultScreen(ctx, fightWon, opponent, player);
       break;
 
     case STATE.GAMEOVER:

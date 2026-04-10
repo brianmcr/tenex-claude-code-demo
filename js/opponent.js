@@ -21,6 +21,7 @@ export function createOpponent(config) {
     currentPattern: null,
     patternIndex: 0,
     patternCooldown: 1.0,
+    lastPatternIndex: -1,
 
     telegraphType: null,
     attackType: null,
@@ -66,9 +67,18 @@ export function updateOpponent(opp, dt) {
 }
 
 function startNextPattern(opp) {
-  const pattern = opp.patterns[opp.patternIndex % opp.patterns.length];
+  let idx;
+  if (opp.patterns.length <= 1) {
+    idx = 0;
+  } else {
+    do {
+      idx = Math.floor(Math.random() * opp.patterns.length);
+    } while (idx === opp.lastPatternIndex);
+  }
+  opp.lastPatternIndex = idx;
+
+  const pattern = opp.patterns[idx];
   opp.currentPattern = pattern;
-  opp.patternIndex++;
 
   opp.telegraphType = pattern.telegraph;
   opp.attackType = pattern.attackType;

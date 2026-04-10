@@ -1,11 +1,17 @@
 let gameTime = 0;
 let hitEffects = [];
 let hitFlashTimer = 0;
+let comicTexts = [];
+const COMIC_WORDS = ['POW!', 'WHAM!', 'BAM!', 'CRACK!', 'SMACK!', 'THWACK!'];
 
 export function updateRendererTime(dt) {
   gameTime += dt;
   if (hitFlashTimer > 0) hitFlashTimer -= dt;
   hitEffects = hitEffects.filter(e => {
+    e.life -= dt;
+    return e.life > 0;
+  });
+  comicTexts = comicTexts.filter(e => {
     e.life -= dt;
     return e.life > 0;
   });
@@ -148,6 +154,10 @@ export function drawOpponent(ctx, opp) {
   ctx.save();
   const baseX = 400, baseY = 300;
 
+  let charScale = 1.0;
+  if (opp.name === 'The Intern') charScale = 0.85;
+  else if (opp.name === 'The CEO') charScale = 1.1;
+
   let offsetX = 0, offsetY = 0, rotate = 0, scaleX = 1, scaleY = 1;
   let leftArmAngle = 0, rightArmAngle = 0;
   let leftGloveExtend = 0, rightGloveExtend = 0;
@@ -165,79 +175,99 @@ export function drawOpponent(ctx, opp) {
     case 'telegraph': {
       const tProg = 0.5 + 0.5 * Math.sin(gameTime * 12);
       if (opp.telegraphType === 'windUpRight') {
-        rightArmAngle = -0.9 - tProg * 0.3;
-        rightGloveExtend = -25;
-        offsetX = 15 + tProg * 5;
-        rotate = -0.06;
+        rightArmAngle = -1.2 - tProg * 0.5;
+        rightGloveExtend = -35;
+        offsetX = 28 + tProg * 10;
+        rotate = -0.18;
         eyeState = 'narrow';
         mouthState = 'smirk';
       } else if (opp.telegraphType === 'windUpLeft') {
-        leftArmAngle = 0.9 + tProg * 0.3;
-        leftGloveExtend = -25;
-        offsetX = -15 - tProg * 5;
-        rotate = 0.06;
+        leftArmAngle = 1.2 + tProg * 0.5;
+        leftGloveExtend = -35;
+        offsetX = -28 - tProg * 10;
+        rotate = 0.18;
         eyeState = 'narrow';
         mouthState = 'smirk';
       } else if (opp.telegraphType === 'adjustCufflinks') {
-        rightArmAngle = -0.5;
-        rightGloveExtend = -20;
-        offsetX = 5;
+        rightArmAngle = -0.8;
+        rightGloveExtend = -30;
+        offsetX = 10;
+        rotate = -0.06;
         eyeState = 'narrow';
         mouthState = 'neutral';
       } else if (opp.telegraphType === 'smirk') {
-        offsetX = tProg * 3;
+        offsetX = tProg * 6;
+        offsetY = -4;
         eyeState = 'narrow';
         mouthState = 'smirk';
-        rightArmAngle = -0.2;
+        rightArmAngle = -0.4;
       } else if (opp.telegraphType === 'feintLeft') {
-        offsetX = -20 - tProg * 8;
-        leftArmAngle = 0.5;
-        rightArmAngle = -0.8 - tProg * 0.3;
-        rightGloveExtend = -20;
-        rotate = 0.08;
+        offsetX = -35 - tProg * 15;
+        leftArmAngle = 0.8;
+        rightArmAngle = -1.2 - tProg * 0.5;
+        rightGloveExtend = -30;
+        rotate = 0.18;
         eyeState = 'narrow';
       } else if (opp.telegraphType === 'crackKnuckles') {
-        leftArmAngle = 0.6;
-        rightArmAngle = -0.6;
-        leftGloveExtend = 15 + tProg * 5;
-        rightGloveExtend = 15 + tProg * 5;
-        offsetY = -5;
-        eyeState = 'narrow';
-        mouthState = 'smirk';
-      } else if (opp.telegraphType === 'raiseClipboard') {
-        rightArmAngle = -1.0 - tProg * 0.3;
-        rightGloveExtend = -30;
+        leftArmAngle = 0.9;
+        rightArmAngle = -0.9;
+        leftGloveExtend = 25 + tProg * 10;
+        rightGloveExtend = 25 + tProg * 10;
         offsetY = -10;
         eyeState = 'narrow';
         mouthState = 'smirk';
+      } else if (opp.telegraphType === 'raiseClipboard') {
+        rightArmAngle = -1.3 - tProg * 0.5;
+        rightGloveExtend = -40;
+        offsetY = -18;
+        rotate = -0.08;
+        eyeState = 'narrow';
+        mouthState = 'smirk';
       } else if (opp.telegraphType === 'flailWindUp') {
-        leftArmAngle = 0.5 + Math.sin(gameTime * 15) * 0.4;
-        rightArmAngle = -0.5 + Math.cos(gameTime * 15) * 0.4;
-        leftGloveExtend = -15 + Math.sin(gameTime * 10) * 10;
-        rightGloveExtend = -15 + Math.cos(gameTime * 10) * 10;
-        offsetY = -12;
-        offsetX = Math.sin(gameTime * 8) * 5;
+        leftArmAngle = 0.8 + Math.sin(gameTime * 15) * 0.6;
+        rightArmAngle = -0.8 + Math.cos(gameTime * 15) * 0.6;
+        leftGloveExtend = -20 + Math.sin(gameTime * 10) * 15;
+        rightGloveExtend = -20 + Math.cos(gameTime * 10) * 15;
+        offsetY = -20;
+        offsetX = Math.sin(gameTime * 8) * 10;
         eyeState = 'normal';
         mouthState = 'open';
       } else if (opp.telegraphType === 'sipCoffee') {
-        rightArmAngle = -1.1;
-        rightGloveExtend = -30;
-        offsetY = breathe;
+        rightArmAngle = -1.3;
+        rightGloveExtend = -35;
+        offsetY = breathe - 5;
+        offsetX = 6;
+        rotate = -0.06;
         eyeState = 'narrow';
         mouthState = 'neutral';
       } else if (opp.telegraphType === 'checkPhone') {
-        rightArmAngle = -0.9;
-        rightGloveExtend = -25;
-        offsetY = breathe;
-        offsetX = -3;
+        rightArmAngle = -1.1;
+        rightGloveExtend = -30;
+        offsetY = breathe - 4;
+        offsetX = -8;
+        rotate = 0.06;
         eyeState = 'narrow';
       } else if (opp.telegraphType === 'adjustTie') {
-        rightArmAngle = -0.4;
-        rightGloveExtend = -20;
-        offsetY = breathe;
-        offsetX = 2;
+        rightArmAngle = -0.7;
+        rightGloveExtend = -25;
+        offsetY = breathe - 3;
+        offsetX = 6;
+        rotate = -0.05;
         eyeState = 'narrow';
         mouthState = 'neutral';
+      }
+      // CEO smirk telegraph: add red/orange glow outline as universal "incoming!" signal
+      if (opp.telegraphType === 'smirk' || opp.telegraphType === 'adjustCufflinks') {
+        const glowPulse = 0.4 + 0.6 * Math.abs(Math.sin(gameTime * 8));
+        ctx.save();
+        ctx.shadowColor = `rgba(255,100,0,${glowPulse})`;
+        ctx.shadowBlur = 18;
+        ctx.strokeStyle = `rgba(255,120,30,${glowPulse * 0.6})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 55, 100, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
       break;
     }
@@ -291,7 +321,7 @@ export function drawOpponent(ctx, opp) {
 
   ctx.translate(baseX + offsetX, baseY + offsetY);
   ctx.rotate(rotate);
-  ctx.scale(scaleX, scaleY);
+  ctx.scale(scaleX * charScale, scaleY * charScale);
 
   // Shadow on floor
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -353,6 +383,18 @@ export function drawOpponent(ctx, opp) {
   ctx.closePath();
   ctx.fill();
 
+  // Pocket square for CEO
+  if (opp.name === 'The CEO') {
+    ctx.fillStyle = '#e8e0d0';
+    ctx.beginPath();
+    ctx.moveTo(22, 15);
+    ctx.lineTo(30, 10);
+    ctx.lineTo(35, 18);
+    ctx.lineTo(28, 22);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   // Collar
   ctx.fillStyle = '#f0e8e0';
   ctx.beginPath();
@@ -377,7 +419,7 @@ export function drawOpponent(ctx, opp) {
   ctx.fillRect(-10, -38, 20, 20);
 
   // Head
-  drawHead(ctx, 0, -65, opp.color, eyeState, mouthState);
+  drawHead(ctx, 0, -65, opp.color, eyeState, mouthState, opp.name);
 
   // Stars over head when stunned or recovery
   if (opp.state === 'stunned' || opp.state === 'recovery') {
@@ -430,11 +472,11 @@ function drawArm(ctx, startX, startY, angle, gloveExtend, suitColor, isLeft) {
   ctx.restore();
 }
 
-function drawHead(ctx, x, y, suitColor, eyeState, mouthState) {
+function drawHead(ctx, x, y, suitColor, eyeState, mouthState, oppName) {
   ctx.save();
   ctx.translate(x, y);
 
-  // Head shape (slightly rounded rectangle for anime style)
+  // Head shape - sharper jaw for CEO, rounder for Intern
   const skinGrad = ctx.createRadialGradient(0, 0, 5, 0, -5, 40);
   skinGrad.addColorStop(0, '#fce4c8');
   skinGrad.addColorStop(1, '#e8c8a0');
@@ -445,25 +487,94 @@ function drawHead(ctx, x, y, suitColor, eyeState, mouthState) {
   ctx.quadraticCurveTo(-30, -30, -20, -38);
   ctx.quadraticCurveTo(0, -45, 20, -38);
   ctx.quadraticCurveTo(30, -30, 28, -15);
-  ctx.quadraticCurveTo(28, 10, 18, 22);
-  ctx.quadraticCurveTo(0, 30, -18, 22);
-  ctx.quadraticCurveTo(-28, 10, -28, -15);
+  if (oppName === 'The CEO') {
+    ctx.quadraticCurveTo(28, 8, 14, 20);
+    ctx.lineTo(0, 28);
+    ctx.lineTo(-14, 20);
+    ctx.quadraticCurveTo(-28, 8, -28, -15);
+  } else if (oppName === 'The Intern') {
+    ctx.quadraticCurveTo(30, 12, 18, 24);
+    ctx.quadraticCurveTo(0, 32, -18, 24);
+    ctx.quadraticCurveTo(-30, 12, -28, -15);
+  } else {
+    ctx.quadraticCurveTo(28, 10, 18, 22);
+    ctx.quadraticCurveTo(0, 30, -18, 22);
+    ctx.quadraticCurveTo(-28, 10, -28, -15);
+  }
   ctx.closePath();
   ctx.fill();
 
-  // Hair (color based on suit to differentiate characters)
-  const hairColor = getHairColor(suitColor);
-  ctx.fillStyle = hairColor;
-  ctx.beginPath();
-  ctx.moveTo(-30, -15);
-  ctx.quadraticCurveTo(-32, -35, -20, -42);
-  ctx.quadraticCurveTo(0, -50, 20, -42);
-  ctx.quadraticCurveTo(32, -35, 30, -15);
-  ctx.quadraticCurveTo(28, -28, 22, -30);
-  ctx.quadraticCurveTo(10, -38, -10, -38);
-  ctx.quadraticCurveTo(-22, -35, -25, -28);
-  ctx.closePath();
-  ctx.fill();
+  // Hair - character specific
+  if (oppName === 'The CEO') {
+    // Silver/white slicked hair
+    const silverGrad = ctx.createLinearGradient(-20, -45, 20, -30);
+    silverGrad.addColorStop(0, '#888');
+    silverGrad.addColorStop(0.4, '#ccc');
+    silverGrad.addColorStop(0.6, '#aaa');
+    silverGrad.addColorStop(1, '#777');
+    ctx.fillStyle = silverGrad;
+    ctx.beginPath();
+    ctx.moveTo(-30, -15);
+    ctx.quadraticCurveTo(-32, -35, -20, -42);
+    ctx.quadraticCurveTo(0, -50, 20, -42);
+    ctx.quadraticCurveTo(32, -35, 30, -15);
+    ctx.quadraticCurveTo(28, -28, 22, -32);
+    ctx.quadraticCurveTo(10, -40, -10, -40);
+    ctx.quadraticCurveTo(-22, -37, -25, -28);
+    ctx.closePath();
+    ctx.fill();
+  } else if (oppName === 'The Intern') {
+    // Messy spiky brown hair
+    ctx.fillStyle = '#6b4226';
+    ctx.beginPath();
+    ctx.moveTo(-30, -15);
+    ctx.quadraticCurveTo(-32, -35, -20, -42);
+    ctx.quadraticCurveTo(0, -50, 20, -42);
+    ctx.quadraticCurveTo(32, -35, 30, -15);
+    ctx.quadraticCurveTo(28, -28, 22, -30);
+    ctx.quadraticCurveTo(10, -38, -10, -38);
+    ctx.quadraticCurveTo(-22, -35, -25, -28);
+    ctx.closePath();
+    ctx.fill();
+    // Spiky bits
+    ctx.fillStyle = '#7b5236';
+    const spikes = [[-12, -42, -8, -55, -3, -44], [5, -42, 12, -56, 16, -42], [-22, -35, -28, -48, -18, -38]];
+    for (const s of spikes) {
+      ctx.beginPath();
+      ctx.moveTo(s[0], s[1]);
+      ctx.lineTo(s[2], s[3]);
+      ctx.lineTo(s[4], s[5]);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else {
+    // Manager - slicked dark hair
+    ctx.fillStyle = '#2a1a0a';
+    ctx.beginPath();
+    ctx.moveTo(-30, -15);
+    ctx.quadraticCurveTo(-32, -35, -20, -42);
+    ctx.quadraticCurveTo(0, -50, 20, -42);
+    ctx.quadraticCurveTo(32, -35, 30, -15);
+    ctx.quadraticCurveTo(28, -28, 22, -30);
+    ctx.quadraticCurveTo(10, -38, -10, -38);
+    ctx.quadraticCurveTo(-22, -35, -25, -28);
+    ctx.closePath();
+    ctx.fill();
+    // Glasses
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.rect(-22, -12, 16, 10);
+    ctx.rect(6, -12, 16, 10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-6, -7);
+    ctx.lineTo(6, -7);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(200,220,255,0.12)';
+    ctx.fillRect(-20, -10, 12, 6);
+    ctx.fillRect(8, -10, 12, 6);
+  }
 
   // Eyes (anime style - big and expressive)
   if (eyeState === 'normal') {
@@ -877,6 +988,45 @@ export function drawHitEffects(ctx) {
       ctx.lineTo(Math.cos(angle) * outerR, Math.sin(angle) * outerR);
       ctx.stroke();
     }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+}
+
+// --- COMIC TEXT EFFECTS ---
+
+export function addComicText(x, y) {
+  const word = COMIC_WORDS[Math.floor(Math.random() * COMIC_WORDS.length)];
+  comicTexts.push({
+    x: x + (Math.random() - 0.5) * 40,
+    y: y - 20 + (Math.random() - 0.5) * 20,
+    word,
+    life: 0.4,
+    maxLife: 0.4,
+    rotate: (Math.random() - 0.5) * 0.4,
+  });
+}
+
+export function drawComicTexts(ctx) {
+  for (const t of comicTexts) {
+    const progress = 1 - t.life / t.maxLife;
+    const alpha = 1 - progress;
+    const scale = 0.5 + progress * 1.0;
+
+    ctx.save();
+    ctx.translate(t.x, t.y - progress * 30);
+    ctx.rotate(t.rotate);
+    ctx.scale(scale, scale);
+    ctx.globalAlpha = alpha;
+
+    ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.strokeText(t.word, 0, 0);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(t.word, 0, 0);
 
     ctx.globalAlpha = 1;
     ctx.restore();

@@ -1,4 +1,5 @@
 let uiTime = 0;
+let starEarnedTimer = 0;
 
 // Screen transition
 let transitionAlpha = 0;
@@ -18,6 +19,11 @@ let lastScreen = '';
 export function updateUITime(dt) {
   uiTime += dt;
   introTimer += dt;
+  if (starEarnedTimer > 0) starEarnedTimer -= dt;
+}
+
+export function notifyStarEarned() {
+  starEarnedTimer = 0.3;
 }
 
 export function resetIntroTimer() {
@@ -78,7 +84,7 @@ export function drawFlavorText(ctx) {
 
 // --- HUD ---
 
-export function drawHUD(ctx, player, opp) {
+export function drawHUD(ctx, player, opp, roundTimer) {
   const W = 800;
   const barW = 250, barH = 18, barY = 16;
 
@@ -87,6 +93,17 @@ export function drawHUD(ctx, player, opp) {
   ctx.font = 'bold 16px "Segoe UI", Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(opp.name, W / 2, 20);
+
+  // Round timer
+  const timerVal = Math.max(0, Math.ceil(roundTimer || 0));
+  ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = timerVal <= 10 ? '#ff4444' : '#ffdd44';
+  if (timerVal <= 10) {
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 10;
+  }
+  ctx.fillText(timerVal.toString(), W / 2, 52);
+  ctx.shadowBlur = 0;
   ctx.textAlign = 'left';
 
   // Player health bar (left side)
@@ -98,10 +115,25 @@ export function drawHUD(ctx, player, opp) {
   // Stamina bar (below player health)
   drawBar(ctx, 20, barY + 36, barW * 0.8, 10, player.stamina / player.maxStamina, '#ddaa22', '#886611', null);
 
-  // Star icons
+  // Star icons with glow on earned
   const starY = barY + 56;
   for (let i = 0; i < player.maxStars; i++) {
-    drawStarIcon(ctx, 30 + i * 24, starY, 8, i < player.stars);
+    const filled = i < player.stars;
+    const isNewest = filled && i === player.stars - 1 && starEarnedTimer > 0;
+    if (isNewest) {
+      const glowT = starEarnedTimer / 0.3;
+      const s = 1 + glowT * 0.6;
+      ctx.save();
+      ctx.translate(30 + i * 24, starY);
+      ctx.scale(s, s);
+      ctx.shadowColor = '#ffdd00';
+      ctx.shadowBlur = 15 * glowT;
+      drawStarIcon(ctx, 0, 0, 8, true);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    } else {
+      drawStarIcon(ctx, 30 + i * 24, starY, 8, filled);
+    }
   }
 
   // Knockdown indicators
@@ -1002,11 +1034,24 @@ function lightenHex(hex, amount) {
 
 // --- RESULT SCREEN ---
 
-export function drawResultScreen(ctx, won) {
+export function drawResultScreen(ctx, won, opp, player) {
   const W = 800, H = 600;
 
   ctx.fillStyle = '#0a0a12';
   ctx.fillRect(0, 0, W, H);
+
+  // Star burst / confetti particles on win
+  if (won) {
+    for (let i = 0; i < 25; i++) {
+      const px = (Math.sin(i * 5.7 + uiTime * 0.6) * 0.5 + 0.5) * W;
+      const py = ((i * 41 + uiTime * 50) % (H + 20)) - 10;
+      const colors = ['#ff4444', '#44ff44', '#ffff44', '#ff44ff', '#44ffff', '#ffaa22'];
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(px, py, 5, 3);
+    }
+    ctx.globalAlpha = 1;
+  }
 
   ctx.save();
   ctx.textAlign = 'center';
@@ -1024,19 +1069,39 @@ export function drawResultScreen(ctx, won) {
   ctx.fillStyle = koGrad;
   ctx.shadowColor = won ? '#ffaa00' : '#ff0000';
   ctx.shadowBlur = 30;
-  ctx.fillText('KO!', W / 2, 260);
+  ctx.fillText('KO!', W / 2, 220);
   ctx.shadowBlur = 0;
+
+  // Opponent name in result
+  if (opp) {
+    ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = won ? '#ffdd88' : '#cc8888';
+    ctx.fillText(
+      won ? `${opp.name} has been knocked out!` : `${opp.name} wins...`,
+      W / 2, 280
+    );
+  }
 
   // Win/lose text
   ctx.font = 'bold 40px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = won ? '#44dd66' : '#dd4444';
   ctx.fillText(won ? 'YOU WIN!' : 'YOU LOSE...', W / 2, 340);
 
+  // Fight stats
+  if (player) {
+    ctx.font = '16px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = '#8888aa';
+    const kdText = player.knockdowns === 0
+      ? 'Flawless - no knockdowns taken!'
+      : `Knockdowns taken: ${player.knockdowns}`;
+    ctx.fillText(kdText, W / 2, 380);
+  }
+
   // Continue
   const pulse = 0.5 + 0.5 * Math.sin(uiTime * 3);
   ctx.font = '20px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = `rgba(200,200,220,${0.3 + pulse * 0.7})`;
-  ctx.fillText('Press ENTER to Continue', W / 2, 440);
+  ctx.fillText('Press ENTER to Continue', W / 2, 450);
 
   ctx.restore();
 }
