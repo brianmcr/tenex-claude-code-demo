@@ -46,9 +46,9 @@ let knockdownIndicatorDir = 1;
 let knockdownMissFlash = 0;
 const KNOCKDOWN_PAUSE = 2.0;
 const PLAYER_KNOCKDOWN_TIME = 10.0;
-const KNOCKDOWN_INDICATOR_SPEED = 1.8;
-const KNOCKDOWN_GREEN_START = 0.38;
-const KNOCKDOWN_GREEN_END = 0.62;
+const KNOCKDOWN_INDICATOR_SPEED = 0.7;
+const KNOCKDOWN_GREEN_START = 0.35;
+const KNOCKDOWN_GREEN_END = 0.65;
 const KNOCKDOWN_HITS_NEEDED = 3;
 const TKO_COUNT = 3;
 
@@ -463,7 +463,9 @@ function update(dt) {
 
     if (knockdownTarget === 'player') {
       // Update indicator position
-      knockdownIndicatorPos += KNOCKDOWN_INDICATOR_SPEED * 2 * dt * knockdownIndicatorDir;
+      const healthPct = player.health / player.maxHealth;
+      const effectiveSpeed = KNOCKDOWN_INDICATOR_SPEED + (1 - healthPct) * 0.8;
+      knockdownIndicatorPos += effectiveSpeed * 2 * dt * knockdownIndicatorDir;
       if (knockdownIndicatorPos >= 1) {
         knockdownIndicatorPos = 1;
         knockdownIndicatorDir = -1;
