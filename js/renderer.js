@@ -21,12 +21,12 @@ export function updateRendererTime(dt) {
 
 export function addHitEffect(x, y) {
   hitEffects.push({ x, y, life: 0.3, maxLife: 0.3 });
-  hitFlashTimer = 0.05;
+  hitFlashTimer = 0.1;
 }
 
 export function drawHitFlash(ctx) {
   if (hitFlashTimer > 0) {
-    ctx.fillStyle = `rgba(255,255,255,${hitFlashTimer / 0.05 * 0.25})`;
+    ctx.fillStyle = `rgba(255,255,255,${hitFlashTimer / 0.1 * 0.25})`;
     ctx.fillRect(0, 0, 800, 600);
   }
 }
@@ -3008,31 +3008,50 @@ export function addComicText(x, y, customWord) {
     x: x + (Math.random() - 0.5) * 60,
     y: y - 20 + (Math.random() - 0.5) * 30,
     word,
-    life: 0.5,
-    maxLife: 0.5,
+    life: 0.7,
+    maxLife: 0.7,
     rotate: (Math.random() - 0.5) * 0.4,
   });
 }
 
 export function drawComicTexts(ctx) {
+  const style = getStyle();
   for (const t of comicTexts) {
     const progress = 1 - t.life / t.maxLife;
     const alpha = 1 - progress;
-    const scale = 0.5 + progress * 1.0;
 
     ctx.save();
     ctx.translate(t.x, t.y - progress * 30);
     ctx.rotate(t.rotate);
-    ctx.scale(scale, scale);
     ctx.globalAlpha = alpha;
 
-    ctx.font = 'bold 44px "Segoe UI", Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 4;
-    ctx.strokeText(t.word, 0, 0);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(t.word, 0, 0);
+    if (style === 'anime') {
+      const scale = 1.5 - progress * 0.7;
+      ctx.scale(scale, scale);
+      ctx.font = 'bold 44px "Segoe UI", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#ff4444';
+      ctx.shadowBlur = 8;
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 6;
+      ctx.strokeText(t.word, 0, 0);
+      ctx.fillStyle = '#ffee44';
+      ctx.fillText(t.word, 0, 0);
+      ctx.shadowBlur = 0;
+    } else {
+      const scale = 0.5 + progress * 1.0;
+      ctx.scale(scale, scale);
+      ctx.font = 'bold 44px "Segoe UI", Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 4;
+      ctx.strokeText(t.word, 0, 0);
+      // Colored outline behind
+      ctx.fillStyle = '#ff4444';
+      ctx.fillText(t.word, 2, 2);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(t.word, 0, 0);
+    }
 
     ctx.globalAlpha = 1;
     ctx.restore();

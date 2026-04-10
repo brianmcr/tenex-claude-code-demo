@@ -66,6 +66,9 @@ let roundTimer = ROUND_TIME;
 // Screen shake
 let screenShake = { intensity: 0, duration: 0 };
 
+// Hitstop
+let hitstopTimer = 0;
+
 // Opponent taunts
 const OPPONENT_TAUNTS = {
   'The Intern': ["P-please don't hit me!", "Is it too late to quit?", "My mom said I'd be good at this!", "I just started Monday!"],
@@ -165,6 +168,14 @@ function resetForNewGame() {
 }
 
 function update(dt) {
+  // Hitstop: freeze game logic but keep rendering
+  if (hitstopTimer > 0) {
+    hitstopTimer -= dt;
+    updateRendererTime(dt);
+    updateUITime(dt);
+    return;
+  }
+
   updateRendererTime(dt);
   updateUITime(dt);
   updateTransition(dt);
@@ -438,8 +449,10 @@ function update(dt) {
     if (result.playerHit) {
       triggerShake(8, 0.2);
       addHitEffect(400, 350);
+      hitstopTimer = 0.05;
     }
     if (result.oppHit) {
+      hitstopTimer = player.action === 'special' ? 0.12 : 0.08;
       triggerShake(4, 0.15);
       const hx = 400 + (Math.random() - 0.5) * 60;
       const hy = 280 + (Math.random() - 0.5) * 40;

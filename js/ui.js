@@ -280,20 +280,41 @@ export function drawTitleScreen(ctx) {
   ctx.fillStyle = '#8888aa';
   ctx.fillText('Fight Your Way to the Top', W / 2, 245);
 
+  // Art style selector (above ENTER prompt for prominence)
+  const styleName = getStyle().toUpperCase();
+  const arrowPulse = 0.4 + 0.6 * Math.abs(Math.sin(uiTime * 4));
+  ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = '#fff';
+  const arrowL = '\u25C4';
+  const arrowR = '\u25BA';
+  const labelText = '  ' + styleName + '  ';
+  // Draw arrows with pulsing opacity
+  ctx.save();
+  ctx.globalAlpha = arrowPulse;
+  ctx.fillText(arrowL, W / 2 - ctx.measureText(labelText).width / 2 - 18, 370);
+  ctx.fillText(arrowR, W / 2 + ctx.measureText(labelText).width / 2 + 6, 370);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  ctx.fillText(labelText, W / 2, 370);
+  // Colored underline
+  const underColor = getStyle() === 'anime' ? '#4488ff' : '#888';
+  const nameW = ctx.measureText(labelText).width;
+  ctx.strokeStyle = underColor;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - nameW / 2, 376);
+  ctx.lineTo(W / 2 + nameW / 2, 376);
+  ctx.stroke();
+  // Instruction
+  ctx.font = '15px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = 'rgba(150,150,170,0.7)';
+  ctx.fillText('\u2190 / \u2192 to change style', W / 2, 396);
+
   // Pulsing "Press ENTER to Start"
   const pulse = 0.5 + 0.5 * Math.sin(uiTime * 3);
   ctx.font = '20px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = `rgba(200,200,220,${0.3 + pulse * 0.7})`;
-  ctx.fillText('Press ENTER to Start', W / 2, 400);
-
-  // Art style selector
-  const styleName = getStyle().toUpperCase();
-  ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
-  ctx.fillStyle = '#fff';
-  ctx.fillText('\u25C4  ' + styleName + '  \u25BA', W / 2, 445);
-  ctx.font = '13px "Segoe UI", Arial, sans-serif';
-  ctx.fillStyle = 'rgba(150,150,170,0.5)';
-  ctx.fillText('\u2190 / \u2192 to change style', W / 2, 465);
+  ctx.fillText('Press ENTER to Start', W / 2, 430);
 
   // Controls
   ctx.font = '14px "Segoe UI", Arial, sans-serif';
