@@ -809,7 +809,16 @@ export function drawAttackName(ctx, name, isUnblockable, timer) {
   ctx.scale(scale, scale);
   ctx.globalAlpha = fadeIn;
 
-  ctx.font = 'bold italic 28px "Segoe UI", Arial, sans-serif';
+  ctx.font = 'bold italic 42px "Segoe UI", Arial, sans-serif';
+
+  // Dark backdrop ribbon
+  const tw = ctx.measureText(name).width;
+  const padX = 20, padY = 20;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.roundRect(-tw / 2 - padX, -padY - 10, tw + padX * 2, padY * 2 + 10, 10);
+  ctx.fill();
+
   ctx.strokeStyle = 'rgba(0,0,0,0.8)';
   ctx.lineWidth = 4;
   ctx.strokeText(name, 0, 0);
@@ -1241,11 +1250,11 @@ export function drawHitEffects(ctx) {
 export function addComicText(x, y, customWord) {
   const word = customWord || COMIC_WORDS[Math.floor(Math.random() * COMIC_WORDS.length)];
   comicTexts.push({
-    x: x + (Math.random() - 0.5) * 40,
-    y: y - 20 + (Math.random() - 0.5) * 20,
+    x: x + (Math.random() - 0.5) * 60,
+    y: y - 20 + (Math.random() - 0.5) * 30,
     word,
-    life: 0.4,
-    maxLife: 0.4,
+    life: 0.5,
+    maxLife: 0.5,
     rotate: (Math.random() - 0.5) * 0.4,
   });
 }
@@ -1262,7 +1271,7 @@ export function drawComicTexts(ctx) {
     ctx.scale(scale, scale);
     ctx.globalAlpha = alpha;
 
-    ctx.font = 'bold 32px "Segoe UI", Arial, sans-serif';
+    ctx.font = 'bold 44px "Segoe UI", Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 4;
@@ -1287,6 +1296,51 @@ export function drawPlayerKnockdownOverlay(ctx, timer) {
   ctx.fillStyle = vig;
   ctx.fillRect(0, 0, W, H);
 
+}
+
+// --- SPEECH BUBBLE ---
+
+export function drawSpeechBubble(ctx, text, x, y, alpha) {
+  if (!text) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  ctx.font = '16px "Segoe UI", Arial, sans-serif';
+  const tw = ctx.measureText(text).width;
+  const padX = 14, padY = 10;
+  const bw = tw + padX * 2;
+  const bh = 28 + padY * 2;
+  const bx = x - bw / 2;
+  const by = y - bh;
+
+  // Shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.4)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 3;
+
+  // Bubble
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bw, bh, 8);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Triangular pointer at bottom center
+  ctx.beginPath();
+  ctx.moveTo(x - 8, by + bh);
+  ctx.lineTo(x + 8, by + bh);
+  ctx.lineTo(x, by + bh + 12);
+  ctx.closePath();
+  ctx.fill();
+
+  // Text
+  ctx.fillStyle = '#222';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x, by + bh / 2 + 6);
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 // --- TELEGRAPH PROP DRAWING ---

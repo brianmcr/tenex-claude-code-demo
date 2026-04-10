@@ -2,7 +2,7 @@ import { clearJustPressed, justPressed } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { createOpponent, updateOpponent, OPP_STATE } from './opponent.js';
 import { processCombat } from './combat.js';
-import { drawRing, drawOpponent, drawPlayer, drawHitEffects, drawHitFlash, addHitEffect, updateRendererTime, drawPlayerKnockdownOverlay, drawTelegraphProp, addComicText, drawComicTexts, drawAttackName } from './renderer.js';
+import { drawRing, drawOpponent, drawPlayer, drawHitEffects, drawHitFlash, addHitEffect, updateRendererTime, drawPlayerKnockdownOverlay, drawTelegraphProp, addComicText, drawComicTexts, drawAttackName, drawSpeechBubble } from './renderer.js';
 import { drawHUD, drawTitleScreen, drawIntroScreen, drawResultScreen, drawGameOverScreen, drawKnockdownCount, drawTransition, updateTransition, startTransition, drawFlavorText, updateFlavorText, showFlavorText, updateUITime, resetIntroTimer, notifyStarEarned } from './ui.js';
 import { createIntern } from './opponents/intern.js';
 import { createManager } from './opponents/manager.js';
@@ -64,6 +64,17 @@ let roundTimer = ROUND_TIME;
 
 // Screen shake
 let screenShake = { intensity: 0, duration: 0 };
+
+// Opponent taunts
+const OPPONENT_TAUNTS = {
+  'The Intern': ["P-please don't hit me!", "Is it too late to quit?", "My mom said I'd be good at this!", "I just started Monday!"],
+  'Middle Manager': ["This will go on your permanent record", "Let's circle back to me winning", "I'm CC'ing HR on this", "Per my last punch..."],
+  'The CEO': ["Your severance package is ready", "I've fired better fighters than you", "Nothing personal. It's business.", "You're out of your league"],
+};
+let lastTauntTime = 0;
+let currentTaunt = '';
+let tauntTimer = 0;
+let nextTauntDelay = 8 + Math.random() * 2;
 
 // State transition
 let pendingState = null;
@@ -140,6 +151,10 @@ function transitionTo(newState) {
 function spawnOpponent(index) {
   opponent = opponentFactories[index]();
   roundTimer = ROUND_TIME;
+  currentTaunt = '';
+  tauntTimer = 0;
+  lastTauntTime = 0;
+  nextTauntDelay = 8 + Math.random() * 2;
 }
 
 function resetForNewGame() {
@@ -388,6 +403,22 @@ function update(dt) {
       }
     }
 
+    // Opponent taunts
+    if (tauntTimer > 0) {
+      tauntTimer -= dt;
+      if (tauntTimer <= 0) currentTaunt = '';
+    }
+    lastTauntTime += dt;
+    if (lastTauntTime >= nextTauntDelay && opponent.state === OPP_STATE.IDLE && !currentTaunt) {
+      const taunts = OPPONENT_TAUNTS[opponent.name];
+      if (taunts) {
+        currentTaunt = taunts[Math.floor(Math.random() * taunts.length)];
+        tauntTimer = 3.0;
+      }
+      lastTauntTime = 0;
+      nextTauntDelay = 8 + Math.random() * 2;
+    }
+
     roundTimer -= dt;
     if (roundTimer <= 0) {
       roundTimer = 0;
@@ -585,6 +616,10 @@ function render() {
       drawHitFlash(ctx);
       drawPlayer(ctx, player);
       drawHUD(ctx, player, opponent, roundTimer);
+      if (currentTaunt && tauntTimer > 0) {
+        const bubbleAlpha = tauntTimer > 2.5 ? Math.min(1, (3.0 - tauntTimer) * 4) : Math.min(1, tauntTimer / 0.5);
+        drawSpeechBubble(ctx, currentTaunt, 400, 170, bubbleAlpha);
+      }
       break;
 
     case STATE.KNOCKDOWN:

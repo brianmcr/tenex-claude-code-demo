@@ -11,7 +11,7 @@ const TRANSITION_DURATION = 0.3;
 // Flavor text
 let flavorText = '';
 let flavorTimer = 0;
-const FLAVOR_DURATION = 2.5;
+const FLAVOR_DURATION = 3.5;
 
 let introTimer = 0;
 let lastScreen = '';
@@ -76,9 +76,19 @@ export function drawFlavorText(ctx) {
   const alpha = flavorTimer > 0.5 ? Math.min(1, (FLAVOR_DURATION - flavorTimer + 0.3) / 0.3) : flavorTimer / 0.5;
   ctx.save();
   ctx.textAlign = 'center';
-  ctx.font = 'italic 22px "Segoe UI", Arial, sans-serif';
+  ctx.font = 'italic 30px "Segoe UI", Arial, sans-serif';
+
+  // Dark backdrop
+  const displayText = '"' + flavorText + '"';
+  const tw = ctx.measureText(displayText).width;
+  const padX = 16, padY = 12;
+  ctx.fillStyle = `rgba(0,0,0,${0.5 * alpha})`;
+  ctx.beginPath();
+  ctx.roundRect(400 - tw / 2 - padX, 460 - padY - 14, tw + padX * 2, padY * 2 + 14, 8);
+  ctx.fill();
+
   ctx.fillStyle = `rgba(255,220,150,${alpha})`;
-  ctx.fillText('"' + flavorText + '"', 400, 480);
+  ctx.fillText(displayText, 400, 460);
   ctx.restore();
 }
 
