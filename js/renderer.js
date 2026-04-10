@@ -1,3 +1,5 @@
+import { getStyle } from './artStyle.js';
+
 let gameTime = 0;
 let hitEffects = [];
 let hitFlashTimer = 0;
@@ -32,6 +34,18 @@ export function drawHitFlash(ctx) {
 // --- RING ---
 
 export function drawRing(ctx) {
+  if (getStyle() === 'anime') {
+    drawRingAnime(ctx);
+  } else {
+    drawRingClassic(ctx);
+  }
+}
+
+function drawRingAnime(ctx) {
+  drawRingClassic(ctx);
+}
+
+function drawRingClassic(ctx) {
   const W = 800, H = 600;
 
   // Crowd background
@@ -150,10 +164,7 @@ function drawPost(ctx, x, y, color) {
 
 // --- OPPONENT ---
 
-export function drawOpponent(ctx, opp) {
-  ctx.save();
-  const baseX = 400, baseY = 300;
-
+export function computeOpponentPose(opp) {
   let charScale = 1.0;
   if (opp.name === 'The Intern') charScale = 0.85;
   else if (opp.name === 'The CEO') charScale = 1.1;
@@ -161,8 +172,9 @@ export function drawOpponent(ctx, opp) {
   let offsetX = 0, offsetY = 0, rotate = 0, scaleX = 1, scaleY = 1;
   let leftArmAngle = 0, rightArmAngle = 0;
   let leftGloveExtend = 0, rightGloveExtend = 0;
-  let eyeState = 'normal'; // normal, narrow, dizzy, closed
-  let mouthState = 'neutral'; // neutral, open, smirk, ouch
+  let eyeState = 'normal';
+  let mouthState = 'neutral';
+  let unblockableGlow = null;
 
   const breathe = Math.sin(gameTime * 2.5) * 2;
   const sway = Math.sin(gameTime * 1.8) * 1.5;
@@ -256,18 +268,9 @@ export function drawOpponent(ctx, opp) {
         eyeState = 'narrow';
         mouthState = 'neutral';
       }
-      // Red/orange glow outline for unblockable attacks
       if (opp.currentPattern && opp.currentPattern.blockable === false) {
         const glowPulse = 0.4 + 0.6 * Math.abs(Math.sin(gameTime * 8));
-        ctx.save();
-        ctx.shadowColor = `rgba(255,100,0,${glowPulse})`;
-        ctx.shadowBlur = 18;
-        ctx.strokeStyle = `rgba(255,120,30,${glowPulse * 0.6})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 55, 100, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
+        unblockableGlow = glowPulse;
       }
       break;
     }
@@ -308,7 +311,6 @@ export function drawOpponent(ctx, opp) {
       rightArmAngle = -0.5;
       break;
     case 'down': {
-      const fallT = Math.min(1, (gameTime % 100));
       offsetY = 120;
       rotate = -0.5;
       scaleY = 0.65;
@@ -317,6 +319,48 @@ export function drawOpponent(ctx, opp) {
       mouthState = 'ouch';
       break;
     }
+  }
+
+  return {
+    offsetX, offsetY, rotate, scaleX, scaleY, charScale,
+    leftArmAngle, rightArmAngle, leftGloveExtend, rightGloveExtend,
+    eyeState, mouthState, breathe, sway, unblockableGlow,
+  };
+}
+
+export function drawOpponent(ctx, opp) {
+  const pose = computeOpponentPose(opp);
+  if (getStyle() === 'anime') {
+    drawOpponentAnime(ctx, pose, opp);
+  } else {
+    drawOpponentClassic(ctx, pose, opp);
+  }
+}
+
+function drawOpponentAnime(ctx, pose, opp) {
+  drawOpponentClassic(ctx, pose, opp);
+}
+
+function drawOpponentClassic(ctx, pose, opp) {
+  ctx.save();
+  const baseX = 400, baseY = 300;
+
+  const { offsetX, offsetY, rotate, scaleX, scaleY, charScale,
+          leftArmAngle, rightArmAngle, leftGloveExtend, rightGloveExtend,
+          eyeState, mouthState, sway, unblockableGlow } = pose;
+
+  // Unblockable glow effect during telegraph
+  if (unblockableGlow !== null) {
+    ctx.save();
+    ctx.translate(baseX + offsetX, baseY + offsetY);
+    ctx.shadowColor = `rgba(255,100,0,${unblockableGlow})`;
+    ctx.shadowBlur = 18;
+    ctx.strokeStyle = `rgba(255,120,30,${unblockableGlow * 0.6})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 55, 100, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   ctx.translate(baseX + offsetX, baseY + offsetY);
@@ -839,10 +883,7 @@ export function drawAttackName(ctx, name, isUnblockable, timer) {
   ctx.restore();
 }
 
-export function drawPlayer(ctx, player) {
-  ctx.save();
-  const W = 800, H = 600;
-  const baseX = 400, baseY = 480;
+export function computePlayerPose(player) {
   const bob = Math.sin(gameTime * 3) * 2;
 
   let bodyOffsetX = 0, bodyOffsetY = 0;
@@ -925,6 +966,37 @@ export function drawPlayer(ctx, player) {
       rightGloveX = 80 + Math.cos(gameTime * 5) * 10;
       break;
   }
+
+  return {
+    bodyOffsetX, bodyOffsetY, bodyRotate,
+    shoulderTiltL, shoulderTiltR,
+    leftGloveX, leftGloveY, rightGloveX, rightGloveY,
+    headOffsetX, headOffsetY, glowColor,
+  };
+}
+
+export function drawPlayer(ctx, player) {
+  const pose = computePlayerPose(player);
+  if (getStyle() === 'anime') {
+    drawPlayerAnime(ctx, pose, player);
+  } else {
+    drawPlayerClassic(ctx, pose, player);
+  }
+}
+
+function drawPlayerAnime(ctx, pose, player) {
+  drawPlayerClassic(ctx, pose, player);
+}
+
+function drawPlayerClassic(ctx, pose, player) {
+  ctx.save();
+  const W = 800, H = 600;
+  const baseX = 400, baseY = 480;
+
+  const { bodyOffsetX, bodyOffsetY, bodyRotate,
+          shoulderTiltL, shoulderTiltR,
+          leftGloveX, leftGloveY, rightGloveX, rightGloveY,
+          headOffsetX, headOffsetY, glowColor } = pose;
 
   ctx.translate(baseX + bodyOffsetX, baseY + bodyOffsetY);
   ctx.rotate(bodyRotate);

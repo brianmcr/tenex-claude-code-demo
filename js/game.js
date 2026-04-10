@@ -1,4 +1,5 @@
 import { clearJustPressed, justPressed } from './input.js';
+import { getStyle, setStyle } from './artStyle.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { createOpponent, updateOpponent, OPP_STATE } from './opponent.js';
 import { processCombat } from './combat.js';
@@ -181,6 +182,9 @@ function update(dt) {
   if (pendingState !== null) return;
 
   if (currentState === STATE.TITLE) {
+    if (justPressed('ArrowLeft') || justPressed('ArrowRight')) {
+      setStyle(getStyle() === 'classic' ? 'anime' : 'classic');
+    }
     if (justPressed('Enter')) {
       currentOpponentIndex = 0;
       player = createPlayer();

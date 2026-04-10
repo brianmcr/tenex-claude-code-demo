@@ -1,3 +1,5 @@
+import { getStyle } from './artStyle.js';
+
 let uiTime = 0;
 let starEarnedTimer = 0;
 
@@ -284,15 +286,24 @@ export function drawTitleScreen(ctx) {
   ctx.fillStyle = `rgba(200,200,220,${0.3 + pulse * 0.7})`;
   ctx.fillText('Press ENTER to Start', W / 2, 400);
 
+  // Art style selector
+  const styleName = getStyle().toUpperCase();
+  ctx.font = 'bold 24px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('\u25C4  ' + styleName + '  \u25BA', W / 2, 445);
+  ctx.font = '13px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = 'rgba(150,150,170,0.5)';
+  ctx.fillText('\u2190 / \u2192 to change style', W / 2, 465);
+
   // Controls
   ctx.font = '14px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = 'rgba(180,180,200,0.7)';
-  ctx.fillText('CONTROLS', W / 2, 470);
+  ctx.fillText('CONTROLS', W / 2, 500);
 
   ctx.font = '13px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = 'rgba(150,150,170,0.6)';
-  ctx.fillText('Z = Left Punch   |   X = Right Punch   |   SPACE = Star Special', W / 2, 495);
-  ctx.fillText('\u2190 = Dodge Left   |   \u2192 = Dodge Right   |   \u2193 = Block', W / 2, 515);
+  ctx.fillText('Z = Left Punch   |   X = Right Punch   |   SPACE = Star Special', W / 2, 525);
+  ctx.fillText('\u2190 = Dodge Left   |   \u2192 = Dodge Right   |   \u2193 = Block', W / 2, 545);
 
   ctx.restore();
 }
