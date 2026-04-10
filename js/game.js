@@ -2,7 +2,7 @@ import { clearJustPressed, justPressed } from './input.js';
 import { createPlayer, updatePlayer } from './player.js';
 import { createOpponent, updateOpponent, OPP_STATE } from './opponent.js';
 import { processCombat } from './combat.js';
-import { drawRing, drawOpponent, drawPlayer, drawHitEffects, drawHitFlash, addHitEffect, updateRendererTime, drawPlayerKnockdownOverlay, drawTelegraphProp, addComicText, drawComicTexts } from './renderer.js';
+import { drawRing, drawOpponent, drawPlayer, drawHitEffects, drawHitFlash, addHitEffect, updateRendererTime, drawPlayerKnockdownOverlay, drawTelegraphProp, addComicText, drawComicTexts, drawAttackName } from './renderer.js';
 import { drawHUD, drawTitleScreen, drawIntroScreen, drawResultScreen, drawGameOverScreen, drawKnockdownCount, drawTransition, updateTransition, startTransition, drawFlavorText, updateFlavorText, showFlavorText, updateUITime, resetIntroTimer, notifyStarEarned } from './ui.js';
 import { createIntern } from './opponents/intern.js';
 import { createManager } from './opponents/manager.js';
@@ -40,11 +40,23 @@ let fightWon = false;
 // Knockdown state
 let knockdownTarget = null;
 let knockdownTimer = 0;
-let knockdownMashCount = 0;
+let knockdownHits = 0;
+let knockdownIndicatorPos = 0;
+let knockdownIndicatorDir = 1;
+let knockdownMissFlash = 0;
 const KNOCKDOWN_PAUSE = 2.0;
 const PLAYER_KNOCKDOWN_TIME = 10.0;
-const PLAYER_MASH_THRESHOLD = 25;
+const KNOCKDOWN_INDICATOR_SPEED = 1.8;
+const KNOCKDOWN_GREEN_START = 0.38;
+const KNOCKDOWN_GREEN_END = 0.62;
+const KNOCKDOWN_HITS_NEEDED = 3;
 const TKO_COUNT = 3;
+
+// Attack name display
+let currentAttackName = '';
+let attackNameTimer = 0;
+let attackNameUnblockable = false;
+let lastOppTelegraphPattern = null;
 
 // Round timer
 const ROUND_TIME = 99;
@@ -358,6 +370,24 @@ function update(dt) {
     updatePlayer(player, dt);
     updateOpponent(opponent, dt);
 
+    // Track attack name display
+    if (opponent.state === OPP_STATE.TELEGRAPH && opponent.currentPattern) {
+      if (lastOppTelegraphPattern !== opponent.currentPattern) {
+        lastOppTelegraphPattern = opponent.currentPattern;
+        if (opponent.currentPattern.name) {
+          currentAttackName = opponent.currentPattern.name;
+          attackNameTimer = 0;
+          attackNameUnblockable = opponent.currentPattern.blockable === false;
+        }
+      }
+      attackNameTimer += dt;
+    } else {
+      if (currentAttackName) {
+        currentAttackName = '';
+        lastOppTelegraphPattern = null;
+      }
+    }
+
     roundTimer -= dt;
     if (roundTimer <= 0) {
       roundTimer = 0;
@@ -396,7 +426,10 @@ function update(dt) {
       currentState = STATE.KNOCKDOWN;
       knockdownTarget = result.knockdown;
       knockdownTimer = 0;
-      knockdownMashCount = 0;
+      knockdownHits = 0;
+      knockdownIndicatorPos = 0;
+      knockdownIndicatorDir = 1;
+      knockdownMissFlash = 0;
       triggerShake(15, 0.4);
 
       if (result.knockdown === 'opponent') {
@@ -429,14 +462,34 @@ function update(dt) {
     }
 
     if (knockdownTarget === 'player') {
-      if (justPressed('KeyZ') || justPressed('KeyX')) {
-        knockdownMashCount++;
+      // Update indicator position
+      knockdownIndicatorPos += KNOCKDOWN_INDICATOR_SPEED * 2 * dt * knockdownIndicatorDir;
+      if (knockdownIndicatorPos >= 1) {
+        knockdownIndicatorPos = 1;
+        knockdownIndicatorDir = -1;
+      } else if (knockdownIndicatorPos <= 0) {
+        knockdownIndicatorPos = 0;
+        knockdownIndicatorDir = 1;
       }
 
-      if (knockdownMashCount >= PLAYER_MASH_THRESHOLD) {
+      if (knockdownMissFlash > 0) knockdownMissFlash -= dt;
+
+      if (justPressed('KeyZ') || justPressed('KeyX')) {
+        if (knockdownIndicatorPos >= KNOCKDOWN_GREEN_START && knockdownIndicatorPos <= KNOCKDOWN_GREEN_END) {
+          knockdownHits++;
+        } else {
+          knockdownMissFlash = 0.3;
+        }
+      }
+
+      if (knockdownHits >= KNOCKDOWN_HITS_NEEDED) {
         player.health = Math.max(player.health, 20);
         player.action = 'idle';
         player.actionTimer = 0;
+        player.invincible = true;
+        player.invincibleTimer = 1.5;
+        opponent.state = OPP_STATE.IDLE;
+        opponent.stateTimer = 1.0;
         currentState = STATE.FIGHT;
       } else if (knockdownTimer >= PLAYER_KNOCKDOWN_TIME) {
         if (player.knockdowns >= TKO_COUNT) {
@@ -446,6 +499,10 @@ function update(dt) {
           player.health = Math.max(player.health, 20);
           player.action = 'idle';
           player.actionTimer = 0;
+          player.invincible = true;
+          player.invincibleTimer = 1.5;
+          opponent.state = OPP_STATE.IDLE;
+          opponent.stateTimer = 1.0;
           currentState = STATE.FIGHT;
         }
       }
@@ -518,6 +575,9 @@ function render() {
       drawRing(ctx);
       drawOpponent(ctx, opponent);
       drawTelegraphProp(ctx, opponent);
+      if (currentAttackName) {
+        drawAttackName(ctx, currentAttackName, attackNameUnblockable, attackNameTimer);
+      }
       drawHitEffects(ctx);
       drawComicTexts(ctx);
       drawHitFlash(ctx);
@@ -545,24 +605,58 @@ function render() {
       }
       drawKnockdownCount(ctx, knockdownTimer, knockdownTarget === 'player');
       if (knockdownTarget === 'player') {
-        const pct = Math.min(1, knockdownMashCount / PLAYER_MASH_THRESHOLD);
         const barW = 300, barH = 20, barX = 250, barY = 555;
+
+        // Background
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.fillRect(barX - 2, barY - 2, barW + 4, barH + 4);
         ctx.fillStyle = '#333';
         ctx.fillRect(barX, barY, barW, barH);
-        const fillColor = pct > 0.7 ? '#44dd66' : pct > 0.4 ? '#ddaa22' : '#dd4444';
-        ctx.fillStyle = fillColor;
-        ctx.fillRect(barX, barY, barW * pct, barH);
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.fillRect(barX, barY, barW * pct, barH / 3);
+
+        // Green zone
+        const greenX = barX + barW * KNOCKDOWN_GREEN_START;
+        const greenW = barW * (KNOCKDOWN_GREEN_END - KNOCKDOWN_GREEN_START);
+        ctx.fillStyle = 'rgba(68,221,102,0.35)';
+        ctx.fillRect(greenX, barY, greenW, barH);
+
+        // Miss flash (red tint on whole bar)
+        if (knockdownMissFlash > 0) {
+          ctx.fillStyle = `rgba(255,50,50,${knockdownMissFlash / 0.3 * 0.4})`;
+          ctx.fillRect(barX, barY, barW, barH);
+        }
+
+        // Moving indicator
+        const indicatorX = barX + barW * knockdownIndicatorPos;
+        const inGreen = knockdownIndicatorPos >= KNOCKDOWN_GREEN_START && knockdownIndicatorPos <= KNOCKDOWN_GREEN_END;
+        ctx.fillStyle = inGreen ? '#44ff66' : '#fff';
+        ctx.shadowColor = inGreen ? '#44ff66' : '#fff';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(indicatorX - 3, barY - 2, 6, barH + 4);
+        ctx.shadowBlur = 0;
+
+        // Border
         ctx.strokeStyle = 'rgba(255,255,255,0.3)';
         ctx.lineWidth = 1;
         ctx.strokeRect(barX, barY, barW, barH);
+
+        // Progress hits
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 14px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(`${knockdownMashCount} / ${PLAYER_MASH_THRESHOLD}`, 400, barY + 15);
+        ctx.fillText(`HIT THE ZONE! ${knockdownHits} / ${KNOCKDOWN_HITS_NEEDED}`, 400, barY - 8);
+
+        // Progress dots
+        for (let i = 0; i < KNOCKDOWN_HITS_NEEDED; i++) {
+          const dotX = 370 + i * 22;
+          const dotY = barY + barH + 14;
+          ctx.beginPath();
+          ctx.arc(dotX, dotY, 6, 0, Math.PI * 2);
+          ctx.fillStyle = i < knockdownHits ? '#44dd66' : 'rgba(100,100,100,0.5)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+          ctx.stroke();
+        }
+
         ctx.textAlign = 'left';
       }
       drawFlavorText(ctx);

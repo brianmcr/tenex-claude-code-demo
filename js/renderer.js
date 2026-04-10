@@ -798,6 +798,38 @@ function drawStarShape(ctx, x, y, size, fill, stroke) {
 
 // --- PLAYER CHARACTER (seen from behind, Punch-Out!! style) ---
 
+export function drawAttackName(ctx, name, isUnblockable, timer) {
+  ctx.save();
+  ctx.textAlign = 'center';
+
+  const fadeIn = Math.min(1, timer / 0.1);
+  const scale = 0.85 + 0.15 * fadeIn;
+
+  ctx.translate(400, 180);
+  ctx.scale(scale, scale);
+  ctx.globalAlpha = fadeIn;
+
+  ctx.font = 'bold italic 28px "Segoe UI", Arial, sans-serif';
+  ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+  ctx.lineWidth = 4;
+  ctx.strokeText(name, 0, 0);
+
+  if (isUnblockable) {
+    const pulse = 0.7 + 0.3 * Math.sin(gameTime * 6);
+    ctx.fillStyle = `rgba(255,${Math.floor(100 + 60 * pulse)},30,${pulse})`;
+    ctx.shadowColor = 'rgba(255,80,0,0.6)';
+    ctx.shadowBlur = 12;
+  } else {
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = 'rgba(255,255,255,0.3)';
+    ctx.shadowBlur = 6;
+  }
+  ctx.fillText(name, 0, 0);
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 export function drawPlayer(ctx, player) {
   ctx.save();
   const W = 800, H = 600;
@@ -1078,6 +1110,20 @@ export function drawPlayer(ctx, player) {
   // Stars over head when stunned
   if (player.action === 'stunned') {
     drawStarsOverHead(ctx, headX, headY - 35);
+  }
+
+  // Invincibility glow
+  if (player.invincible) {
+    const pulse = 0.3 + 0.7 * Math.abs(Math.sin(gameTime * 8));
+    ctx.save();
+    ctx.shadowColor = `rgba(255,220,80,${pulse})`;
+    ctx.shadowBlur = 25;
+    ctx.strokeStyle = `rgba(255,255,200,${pulse * 0.6})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, -30, 60, 80, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   ctx.restore();

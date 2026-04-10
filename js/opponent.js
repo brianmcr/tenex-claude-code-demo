@@ -31,6 +31,7 @@ export function createOpponent(config) {
     idleMaxTime: config.idleMaxTime || 2.0,
     goldenParachute: config.goldenParachute || false,
     usedParachute: false,
+    desperate: false,
 
     portrait: config.portrait || null,
     title: config.title || '',
@@ -53,15 +54,21 @@ export function updateOpponent(opp, dt) {
         opp.state = OPP_STATE.ATTACK;
         opp.stateTimer = opp.currentPattern.attackDuration;
         break;
-      case OPP_STATE.ATTACK:
+      case OPP_STATE.ATTACK: {
         opp.state = OPP_STATE.RECOVERY;
-        opp.stateTimer = opp.currentPattern.recoveryDuration;
+        let recoverTime = opp.currentPattern.recoveryDuration;
+        if (opp.desperate) recoverTime *= 1.5;
+        opp.stateTimer = recoverTime;
         break;
+      }
       case OPP_STATE.RECOVERY:
-      case OPP_STATE.STUNNED:
+      case OPP_STATE.STUNNED: {
         opp.state = OPP_STATE.IDLE;
-        opp.stateTimer = opp.idleMinTime + Math.random() * (opp.idleMaxTime - opp.idleMinTime);
+        let idleTime = opp.idleMinTime + Math.random() * (opp.idleMaxTime - opp.idleMinTime);
+        if (opp.desperate) idleTime *= 0.5;
+        opp.stateTimer = idleTime;
         break;
+      }
     }
   }
 }

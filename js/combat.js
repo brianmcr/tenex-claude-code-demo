@@ -9,7 +9,7 @@ export function processCombat(player, opp, dt) {
   const result = { playerHit: false, oppHit: false, knockdown: null, blocked: false };
 
   // --- Opponent attacks player ---
-  if (opp.state === OPP_STATE.ATTACK && opp.stateTimer > 0) {
+  if (opp.state === OPP_STATE.ATTACK && opp.stateTimer > 0 && !player.invincible) {
     const pattern = opp.currentPattern;
     const justStarted = opp.stateTimer > pattern.attackDuration - dt * 1.5;
     if (justStarted) {
@@ -28,6 +28,14 @@ export function processCombat(player, opp, dt) {
         stunOpponent(opp, BLOCK_STUN_DURATION);
         result.blocked = true;
         player.blockFlashTimer = 0.3;
+        // Chip damage through block
+        if (pattern.chipDamage) {
+          player.health -= pattern.chipDamage;
+          if (player.health <= 0) {
+            player.health = 0;
+            result.knockdown = 'player';
+          }
+        }
       } else if (dodged) {
         opp.state = OPP_STATE.RECOVERY;
         opp.stateTimer = pattern.recoveryDuration;
@@ -53,7 +61,8 @@ export function processCombat(player, opp, dt) {
     if (opp.health <= 0) {
       if (opp.goldenParachute && !opp.usedParachute) {
         opp.usedParachute = true;
-        opp.health = opp.maxHealth * 0.5;
+        opp.health = Math.round(opp.maxHealth * 0.3);
+        opp.desperate = true;
         stunOpponent(opp, 2.0);
       } else {
         opp.health = 0;
@@ -71,7 +80,8 @@ export function processCombat(player, opp, dt) {
     if (opp.health <= 0) {
       if (opp.goldenParachute && !opp.usedParachute) {
         opp.usedParachute = true;
-        opp.health = opp.maxHealth * 0.5;
+        opp.health = Math.round(opp.maxHealth * 0.3);
+        opp.desperate = true;
         stunOpponent(opp, 2.0);
       } else {
         opp.health = 0;

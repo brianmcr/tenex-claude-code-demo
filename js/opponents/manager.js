@@ -13,6 +13,7 @@ export function createManager() {
 
     patterns: [
       {
+        name: 'Synergy Strike',
         telegraph: 'adjustTie',
         telegraphDuration: 0.6,
         attackType: 'jab',
@@ -23,6 +24,7 @@ export function createManager() {
         blockable: true,
       },
       {
+        name: 'Coffee Break',
         telegraph: 'sipCoffee',
         telegraphDuration: 0.8,
         attackType: 'uppercut',
@@ -33,6 +35,7 @@ export function createManager() {
         blockable: false,
       },
       {
+        name: 'Passive Aggression',
         telegraph: 'adjustTie',
         telegraphDuration: 0.5,
         attackType: 'jab',
@@ -43,6 +46,7 @@ export function createManager() {
         blockable: true,
       },
       {
+        name: 'Meeting Invite',
         telegraph: 'checkPhone',
         telegraphDuration: 0.7,
         attackType: 'combo',
@@ -53,6 +57,7 @@ export function createManager() {
         blockable: true,
       },
       {
+        name: 'Performance Review',
         telegraph: 'raiseClipboard',
         telegraphDuration: 0.8,
         attackType: 'slam',

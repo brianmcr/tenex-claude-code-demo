@@ -22,6 +22,8 @@ export function createPlayer() {
     actionTimer: 0,
     blockFlashTimer: 0,
     mashCount: 0,       // for knockdown recovery
+    invincible: false,
+    invincibleTimer: 0,
 
     get punchPower() {
       return this.stamina > 20 ? 8 : 3;
@@ -34,6 +36,13 @@ export function createPlayer() {
 
 export function updatePlayer(p, dt) {
   if (p.blockFlashTimer > 0) p.blockFlashTimer -= dt;
+  if (p.invincibleTimer > 0) {
+    p.invincibleTimer -= dt;
+    if (p.invincibleTimer <= 0) {
+      p.invincible = false;
+      p.invincibleTimer = 0;
+    }
+  }
 
   if (p.action === 'idle' || p.action === 'block') {
     p.stamina = Math.min(p.maxStamina, p.stamina + STAMINA_REGEN * dt);

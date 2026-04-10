@@ -13,6 +13,7 @@ export function createIntern() {
 
     patterns: [
       {
+        name: 'Nervous Jab',
         telegraph: 'windUpRight',
         telegraphDuration: 1.0,
         attackType: 'hook',
@@ -23,6 +24,7 @@ export function createIntern() {
         blockable: true,
       },
       {
+        name: 'Nervous Jab',
         telegraph: 'windUpLeft',
         telegraphDuration: 1.0,
         attackType: 'hook',
@@ -33,6 +35,7 @@ export function createIntern() {
         blockable: true,
       },
       {
+        name: 'Nervous Jab',
         telegraph: 'windUpRight',
         telegraphDuration: 1.0,
         attackType: 'hook',
@@ -43,6 +46,7 @@ export function createIntern() {
         blockable: true,
       },
       {
+        name: 'First Day Flail',
         telegraph: 'flailWindUp',
         telegraphDuration: 1.2,
         attackType: 'flail',
