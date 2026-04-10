@@ -796,59 +796,203 @@ function drawStarShape(ctx, x, y, size, fill, stroke) {
   ctx.stroke();
 }
 
-// --- PLAYER GLOVES ---
+// --- PLAYER CHARACTER (seen from behind, Punch-Out!! style) ---
 
 export function drawPlayer(ctx, player) {
   ctx.save();
   const W = 800, H = 600;
-  let leftX = 240, leftY = 500;
-  let rightX = 560, rightY = 500;
-  const bob = Math.sin(gameTime * 3) * 3;
+  const baseX = 400, baseY = 480;
+  const bob = Math.sin(gameTime * 3) * 2;
+
+  let bodyOffsetX = 0, bodyOffsetY = 0;
+  let bodyRotate = 0;
+  let shoulderTiltL = 0, shoulderTiltR = 0;
+  let leftGloveX = -70, leftGloveY = -90;
+  let rightGloveX = 70, rightGloveY = -90;
+  let headOffsetX = 0, headOffsetY = 0;
   let glowColor = null;
 
   switch (player.action) {
     case 'idle':
-      leftY += bob;
-      rightY += bob;
+      bodyOffsetY = bob;
+      headOffsetY = bob * 0.7;
       break;
     case 'punchLeft':
-      leftX = 370;
-      leftY = 340;
-      rightY += 10;
+      leftGloveX = -20;
+      leftGloveY = -160;
+      bodyRotate = 0.08;
+      bodyOffsetX = 8;
+      headOffsetX = 5;
+      shoulderTiltL = -6;
+      rightGloveY += 10;
       break;
     case 'punchRight':
-      rightX = 430;
-      rightY = 340;
-      leftY += 10;
+      rightGloveX = 20;
+      rightGloveY = -160;
+      bodyRotate = -0.08;
+      bodyOffsetX = -8;
+      headOffsetX = -5;
+      shoulderTiltR = -6;
+      leftGloveY += 10;
       break;
     case 'dodgeLeft':
-      leftX -= 120;
-      rightX -= 120;
+      bodyOffsetX = -60;
+      headOffsetX = -65;
+      bodyRotate = -0.18;
+      shoulderTiltL = 8;
+      shoulderTiltR = -12;
+      leftGloveX -= 50;
+      rightGloveX -= 50;
+      headOffsetY = 8;
       break;
     case 'dodgeRight':
-      leftX += 120;
-      rightX += 120;
+      bodyOffsetX = 60;
+      headOffsetX = 65;
+      bodyRotate = 0.18;
+      shoulderTiltL = -12;
+      shoulderTiltR = 8;
+      leftGloveX += 50;
+      rightGloveX += 50;
+      headOffsetY = 8;
       break;
     case 'block':
-      leftX = 330;
-      leftY = 380;
-      rightX = 470;
-      rightY = 380;
+      leftGloveX = -25;
+      leftGloveY = -120;
+      rightGloveX = 25;
+      rightGloveY = -120;
+      headOffsetY = 12;
+      shoulderTiltL = 5;
+      shoulderTiltR = 5;
       break;
     case 'special':
-      leftX = 340;
-      leftY = 360;
-      rightX = 460;
-      rightY = 360;
+      leftGloveX = -18;
+      leftGloveY = -155;
+      rightGloveX = 18;
+      rightGloveY = -155;
+      bodyOffsetY = -10;
+      headOffsetY = -8;
       glowColor = 'rgba(255,220,80,0.5)';
       break;
     case 'stunned':
-      leftY = 540 + Math.sin(gameTime * 8) * 8;
-      rightY = 540 + Math.cos(gameTime * 8) * 8;
-      leftX += Math.sin(gameTime * 6) * 15;
-      rightX += Math.cos(gameTime * 6) * 15;
+      bodyOffsetX = Math.sin(gameTime * 6) * 15;
+      headOffsetX = Math.sin(gameTime * 7) * 18;
+      headOffsetY = 10 + Math.sin(gameTime * 5) * 5;
+      bodyRotate = Math.sin(gameTime * 4) * 0.06;
+      leftGloveY = -50;
+      rightGloveY = -50;
+      leftGloveX = -80 + Math.sin(gameTime * 5) * 10;
+      rightGloveX = 80 + Math.cos(gameTime * 5) * 10;
       break;
   }
+
+  ctx.translate(baseX + bodyOffsetX, baseY + bodyOffsetY);
+  ctx.rotate(bodyRotate);
+
+  // Shadow on floor
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(0, 40, 70, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Upper back / torso (white tank top, seen from behind)
+  const tankGrad = ctx.createLinearGradient(-50, -60, 50, 30);
+  tankGrad.addColorStop(0, '#f0f0f0');
+  tankGrad.addColorStop(0.5, '#e0e0e0');
+  tankGrad.addColorStop(1, '#c8c8c8');
+  ctx.fillStyle = tankGrad;
+  ctx.beginPath();
+  ctx.moveTo(-52, -30 + shoulderTiltL);
+  ctx.quadraticCurveTo(-55, 0, -45, 40);
+  ctx.lineTo(45, 40);
+  ctx.quadraticCurveTo(55, 0, 52, -30 + shoulderTiltR);
+  ctx.quadraticCurveTo(30, -42, 0, -40);
+  ctx.quadraticCurveTo(-30, -42, -52, -30 + shoulderTiltL);
+  ctx.closePath();
+  ctx.fill();
+
+  // Tank top straps
+  ctx.fillStyle = '#e8e8e8';
+  ctx.beginPath();
+  ctx.moveTo(-18, -60);
+  ctx.quadraticCurveTo(-22, -45, -28, -35);
+  ctx.lineTo(-38, -30 + shoulderTiltL);
+  ctx.lineTo(-48, -28 + shoulderTiltL);
+  ctx.quadraticCurveTo(-35, -42, -22, -55);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(18, -60);
+  ctx.quadraticCurveTo(22, -45, 28, -35);
+  ctx.lineTo(38, -30 + shoulderTiltR);
+  ctx.lineTo(48, -28 + shoulderTiltR);
+  ctx.quadraticCurveTo(35, -42, 22, -55);
+  ctx.closePath();
+  ctx.fill();
+
+  // Back muscle definition (subtle lines)
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1.5;
+  // Spine
+  ctx.beginPath();
+  ctx.moveTo(0, -35);
+  ctx.quadraticCurveTo(1, 0, 0, 35);
+  ctx.stroke();
+  // Shoulder blades
+  ctx.beginPath();
+  ctx.moveTo(-15, -20);
+  ctx.quadraticCurveTo(-25, -5, -18, 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(15, -20);
+  ctx.quadraticCurveTo(25, -5, 18, 10);
+  ctx.stroke();
+
+  // Skin color for shoulders/neck
+  const skinColor = '#d4a070';
+  const skinDark = '#b88050';
+
+  // Left shoulder (exposed skin above strap)
+  ctx.fillStyle = skinColor;
+  ctx.beginPath();
+  ctx.ellipse(-48, -32 + shoulderTiltL, 14, 10, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Right shoulder
+  ctx.beginPath();
+  ctx.ellipse(48, -32 + shoulderTiltR, 14, 10, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Left arm (foreshortened, going toward screen)
+  ctx.save();
+  ctx.translate(-48, -25 + shoulderTiltL);
+  const lArmAngle = Math.atan2(leftGloveY - (-25 + shoulderTiltL), leftGloveX - (-48));
+  // Upper arm skin
+  const armGrad = ctx.createLinearGradient(0, 0, leftGloveX + 48, leftGloveY + 25 - shoulderTiltL);
+  armGrad.addColorStop(0, skinColor);
+  armGrad.addColorStop(1, skinDark);
+  ctx.strokeStyle = armGrad;
+  ctx.lineWidth = 16;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo((leftGloveX + 48) * 0.6, (leftGloveY + 25 - shoulderTiltL) * 0.6);
+  ctx.stroke();
+  ctx.restore();
+
+  // Right arm
+  ctx.save();
+  ctx.translate(48, -25 + shoulderTiltR);
+  const rArmGrad = ctx.createLinearGradient(0, 0, rightGloveX - 48, rightGloveY + 25 - shoulderTiltR);
+  rArmGrad.addColorStop(0, skinColor);
+  rArmGrad.addColorStop(1, skinDark);
+  ctx.strokeStyle = rArmGrad;
+  ctx.lineWidth = 16;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo((rightGloveX - 48) * 0.6, (rightGloveY + 25 - shoulderTiltR) * 0.6);
+  ctx.stroke();
+  ctx.restore();
 
   // Glow effect for special
   if (glowColor) {
@@ -863,36 +1007,78 @@ export function drawPlayer(ctx, player) {
     ctx.shadowBlur = 25 * flashAlpha;
   }
 
-  drawGlove(ctx, leftX, leftY, true);
-  drawGlove(ctx, rightX, rightY, false);
+  // Gloves
+  drawGlove(ctx, leftGloveX, leftGloveY, true);
+  drawGlove(ctx, rightGloveX, rightGloveY, false);
 
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
 
-  // Forearm hints (from bottom of screen)
-  ctx.strokeStyle = '#c49060';
-  ctx.lineWidth = 18;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(leftX, leftY + 25);
-  ctx.lineTo(200, H + 30);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(rightX, rightY + 25);
-  ctx.lineTo(600, H + 30);
-  ctx.stroke();
+  // Neck
+  ctx.fillStyle = skinColor;
+  ctx.fillRect(-8, -62, 16, 16);
 
-  // Shirt sleeve cuff hints
-  ctx.strokeStyle = '#eee';
-  ctx.lineWidth = 8;
+  // Head (back of head - dark short hair)
+  const headX = headOffsetX;
+  const headY = -80 + headOffsetY;
+  ctx.save();
+  ctx.translate(headX, headY);
+
+  // Head shape (back view - slightly oval)
+  const headGrad = ctx.createRadialGradient(0, 0, 5, 0, -3, 28);
+  headGrad.addColorStop(0, '#2a1a0a');
+  headGrad.addColorStop(0.7, '#1a0e05');
+  headGrad.addColorStop(1, '#0e0804');
+  ctx.fillStyle = headGrad;
   ctx.beginPath();
-  ctx.moveTo(leftX - 8, leftY + 22);
-  ctx.lineTo(leftX + 8, leftY + 22);
-  ctx.stroke();
+  ctx.ellipse(0, 0, 24, 28, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair texture lines (back of head)
+  ctx.strokeStyle = 'rgba(60,40,20,0.4)';
+  ctx.lineWidth = 1;
+  for (let i = -3; i <= 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * 5, -22);
+    ctx.quadraticCurveTo(i * 6, 0, i * 4, 20);
+    ctx.stroke();
+  }
+
+  // Top of hair - slightly rounded
+  ctx.fillStyle = '#2a1a0a';
   ctx.beginPath();
-  ctx.moveTo(rightX - 8, rightY + 22);
-  ctx.lineTo(rightX + 8, rightY + 22);
-  ctx.stroke();
+  ctx.ellipse(0, -16, 22, 14, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+
+  // Ears (visible from behind)
+  ctx.fillStyle = '#d4a070';
+  ctx.beginPath();
+  ctx.ellipse(-24, 2, 5, 8, -0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(24, 2, 5, 8, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  // Ear inner
+  ctx.fillStyle = '#c08858';
+  ctx.beginPath();
+  ctx.ellipse(-24, 2, 3, 5, -0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(24, 2, 3, 5, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Neck line at base of head
+  ctx.fillStyle = skinColor;
+  ctx.beginPath();
+  ctx.ellipse(0, 22, 12, 6, 0, 0, Math.PI);
+  ctx.fill();
+
+  ctx.restore();
+
+  // Stars over head when stunned
+  if (player.action === 'stunned') {
+    drawStarsOverHead(ctx, headX, headY - 35);
+  }
 
   ctx.restore();
 }
