@@ -1090,7 +1090,13 @@ export function drawResultScreen(ctx, won, opp, player) {
       const colors = ['#ff4444', '#44ff44', '#ffff44', '#ff44ff', '#44ffff', '#ffaa22'];
       ctx.fillStyle = colors[i % colors.length];
       ctx.globalAlpha = 0.7;
-      ctx.fillRect(px, py, 5, 3);
+      const sizes = [[8, 4], [6, 3], [4, 6]];
+      const [sw, sh] = sizes[i % 3];
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(uiTime * 2 + i * 0.7);
+      ctx.fillRect(-sw / 2, -sh / 2, sw, sh);
+      ctx.restore();
     }
     ctx.globalAlpha = 1;
   }
@@ -1187,7 +1193,13 @@ export function drawGameOverScreen(ctx, won) {
       const py = ((i * 37 + uiTime * 60) % (H + 20)) - 10;
       const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff'];
       ctx.fillStyle = colors[i % colors.length];
-      ctx.fillRect(px, py, 6, 4);
+      const sizes = [[8, 4], [6, 3], [4, 6]];
+      const [sw, sh] = sizes[i % 3];
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(uiTime * 2 + i * 0.7);
+      ctx.fillRect(-sw / 2, -sh / 2, sw, sh);
+      ctx.restore();
     }
   } else {
     ctx.font = 'bold 56px "Segoe UI", Arial, sans-serif';

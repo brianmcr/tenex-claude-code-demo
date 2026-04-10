@@ -576,25 +576,215 @@ export function computeOpponentPose(opp) {
       }
       break;
     }
-    case 'attack':
-      offsetY = 25;
-      scaleX = 1.05;
-      scaleY = 1.05;
-      mouthState = 'open';
-      if (opp.attackDirection === 'right') {
-        rightGloveExtend = 50;
-        rightArmAngle = -0.3;
-        offsetX = -15;
-      } else if (opp.attackDirection === 'left') {
-        leftGloveExtend = 50;
-        leftArmAngle = 0.3;
-        offsetX = 15;
-      } else {
-        leftGloveExtend = 35;
-        rightGloveExtend = 35;
-        offsetY = 40;
+    case 'attack': {
+      const atkType = opp.attackType || 'jab';
+      const atkDir = opp.attackDirection || 'center';
+      const dirSign = atkDir === 'left' ? 1 : -1;
+
+      switch (atkType) {
+        case 'jab':
+          offsetY = 15;
+          scaleX = 1.02;
+          scaleY = 1.02;
+          eyeState = 'narrow';
+          mouthState = 'neutral';
+          if (atkDir === 'right') {
+            rightGloveExtend = 60;
+            rightArmAngle = -0.2;
+            offsetX = -8;
+          } else if (atkDir === 'left') {
+            leftGloveExtend = 60;
+            leftArmAngle = 0.2;
+            offsetX = 8;
+          } else {
+            rightGloveExtend = 60;
+            rightArmAngle = -0.2;
+          }
+          break;
+
+        case 'hook':
+          offsetY = 20;
+          offsetX = dirSign * 20;
+          rotate = dirSign * 0.15;
+          scaleX = 1.05;
+          scaleY = 1.05;
+          eyeState = 'narrow';
+          mouthState = 'open';
+          if (atkDir === 'right') {
+            rightArmAngle = -0.8;
+            rightGloveExtend = 45;
+          } else if (atkDir === 'left') {
+            leftArmAngle = 0.8;
+            leftGloveExtend = 45;
+          } else {
+            rightArmAngle = -0.6;
+            rightGloveExtend = 40;
+            leftArmAngle = 0.6;
+            leftGloveExtend = 40;
+          }
+          break;
+
+        case 'uppercut':
+          offsetY = -10;
+          scaleX = 1.04;
+          scaleY = 1.06;
+          eyeState = 'narrow';
+          mouthState = 'open';
+          if (atkDir === 'right') {
+            rightArmAngle = -1.2;
+            rightGloveExtend = -40;
+            offsetX = -10;
+          } else if (atkDir === 'left') {
+            leftArmAngle = 1.2;
+            leftGloveExtend = -40;
+            offsetX = 10;
+          } else {
+            rightArmAngle = -1.0;
+            rightGloveExtend = -35;
+          }
+          break;
+
+        case 'cross':
+          offsetY = 30;
+          rotate = dirSign * 0.12;
+          scaleX = 1.08;
+          scaleY = 1.04;
+          eyeState = 'narrow';
+          mouthState = 'open';
+          if (atkDir === 'right') {
+            rightGloveExtend = 55;
+            rightArmAngle = -0.3;
+            offsetX = -18;
+          } else if (atkDir === 'left') {
+            leftGloveExtend = 55;
+            leftArmAngle = 0.3;
+            offsetX = 18;
+          } else {
+            rightGloveExtend = 50;
+            rightArmAngle = -0.25;
+            offsetY = 35;
+          }
+          break;
+
+        case 'slam':
+          offsetY = 35;
+          scaleX = 1.06;
+          scaleY = 1.08;
+          eyeState = 'narrow';
+          mouthState = 'open';
+          if (atkDir === 'center') {
+            leftArmAngle = 1.5;
+            rightArmAngle = -1.5;
+            leftGloveExtend = 40;
+            rightGloveExtend = 40;
+          } else if (atkDir === 'right') {
+            rightArmAngle = -1.5;
+            rightGloveExtend = 45;
+            offsetX = -12;
+          } else {
+            leftArmAngle = 1.5;
+            leftGloveExtend = 45;
+            offsetX = 12;
+          }
+          break;
+
+        case 'combo':
+          offsetY = 22;
+          offsetX = Math.sin(gameTime * 20) * 15;
+          scaleX = 1.05;
+          scaleY = 1.05;
+          eyeState = 'narrow';
+          mouthState = 'open';
+          if (Math.sin(gameTime * 20) > 0) {
+            rightGloveExtend = 50;
+            rightArmAngle = -0.3;
+            leftGloveExtend = 10;
+          } else {
+            leftGloveExtend = 50;
+            leftArmAngle = 0.3;
+            rightGloveExtend = 10;
+          }
+          break;
+
+        case 'flail':
+          offsetY = 18 + Math.sin(gameTime * 8) * 8;
+          offsetX = Math.sin(gameTime * 11) * 12;
+          rotate = Math.sin(gameTime * 9) * 0.08;
+          scaleX = 1.04;
+          scaleY = 1.04;
+          eyeState = 'normal';
+          mouthState = 'open';
+          leftArmAngle = Math.sin(gameTime * 15) * 1.0;
+          rightArmAngle = Math.cos(gameTime * 15) * 1.0;
+          leftGloveExtend = 20 + Math.sin(gameTime * 12) * 25;
+          rightGloveExtend = 20 + Math.cos(gameTime * 12) * 25;
+          break;
+
+        case 'feint': {
+          const dur = opp.currentPattern ? opp.currentPattern.attackDuration : 0.4;
+          const progress = 1 - (opp.stateTimer / dur);
+          eyeState = 'narrow';
+          mouthState = 'smirk';
+          scaleX = 1.04;
+          scaleY = 1.04;
+          if (progress < 0.5) {
+            offsetX = dirSign * 25;
+            rotate = dirSign * 0.12;
+            if (atkDir === 'right') { rightGloveExtend = 30; rightArmAngle = -0.4; }
+            else { leftGloveExtend = 30; leftArmAngle = 0.4; }
+            offsetY = 15;
+          } else {
+            offsetX = -dirSign * 20;
+            rotate = -dirSign * 0.1;
+            if (atkDir === 'right') { leftGloveExtend = 50; leftArmAngle = 0.3; }
+            else { rightGloveExtend = 50; rightArmAngle = -0.3; }
+            offsetY = 25;
+          }
+          break;
+        }
+
+        case 'boardMeeting':
+          offsetY = 20 + Math.sin(gameTime * 12) * 10;
+          offsetX = Math.sin(gameTime * 18) * 18;
+          scaleX = 1.07;
+          scaleY = 1.07;
+          eyeState = 'narrow';
+          mouthState = 'open';
+          if (Math.sin(gameTime * 18) > 0) {
+            rightGloveExtend = 55;
+            rightArmAngle = -0.4;
+            leftGloveExtend = 15;
+            leftArmAngle = 0.2;
+          } else {
+            leftGloveExtend = 55;
+            leftArmAngle = 0.4;
+            rightGloveExtend = 15;
+            rightArmAngle = -0.2;
+          }
+          break;
+
+        default:
+          offsetY = 25;
+          scaleX = 1.05;
+          scaleY = 1.05;
+          mouthState = 'open';
+          if (atkDir === 'right') {
+            rightGloveExtend = 50;
+            rightArmAngle = -0.3;
+            offsetX = -15;
+          } else if (atkDir === 'left') {
+            leftGloveExtend = 50;
+            leftArmAngle = 0.3;
+            offsetX = 15;
+          } else {
+            leftGloveExtend = 35;
+            rightGloveExtend = 35;
+            offsetY = 40;
+          }
+          break;
       }
       break;
+    }
     case 'recovery':
       offsetX = Math.sin(gameTime * 8) * 8;
       offsetY = 5;
